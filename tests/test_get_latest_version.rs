@@ -8,21 +8,21 @@ fn valid_semver_format(version: &str) -> bool {
 }
 
 #[tokio::test]
-async fn test_get_latest_version_safe() {
+async fn should_get_latest_version_of_safe() {
     let release_type = ReleaseType::Safe;
     let version = get_latest_version(&release_type).await.unwrap();
     assert!(valid_semver_format(&version));
 }
 
 #[tokio::test]
-async fn test_get_latest_version_safenode() {
+async fn should_get_latest_version_of_safenode() {
     let release_type = ReleaseType::Safenode;
     let version = get_latest_version(&release_type).await.unwrap();
     assert!(valid_semver_format(&version));
 }
 
 #[tokio::test]
-async fn test_get_latest_version_testnet() {
+async fn should_get_latest_version_of_testnet() {
     let release_type = ReleaseType::Testnet;
     let version = get_latest_version(&release_type).await.unwrap();
     assert!(valid_semver_format(&version));
