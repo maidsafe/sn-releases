@@ -1,8 +1,6 @@
 use assert_fs::prelude::*;
 use predicates::prelude::*;
-use sn_releases::{
-    download_release_from_s3, extract_release_archive, ArchiveType, Platform, ReleaseType,
-};
+use sn_releases::{ArchiveType, Platform, ReleaseType, SafeReleaseRepositoryInterface};
 
 const SAFE_VERSION: &str = "0.83.51";
 const SAFENODE_VERSION: &str = "0.93.7";
@@ -22,19 +20,22 @@ async fn download_and_extract(
 
     let progress_callback = |_downloaded: u64, _total: u64| {};
 
-    let archive_path = download_release_from_s3(
-        release_type,
-        version,
-        platform,
-        archive_type,
-        &download_dir.to_path_buf(),
-        &progress_callback,
-    )
-    .await
-    .unwrap();
+    let release_repo = <dyn SafeReleaseRepositoryInterface>::default_config();
+    let archive_path = release_repo
+        .download_release_from_s3(
+            release_type,
+            version,
+            platform,
+            archive_type,
+            &download_dir,
+            &progress_callback,
+        )
+        .await
+        .unwrap();
 
-    let extracted_path =
-        extract_release_archive(&archive_path, &extract_dir.to_path_buf()).unwrap();
+    let extracted_path = release_repo
+        .extract_release_archive(&archive_path, &extract_dir)
+        .unwrap();
 
     let binary_name = match release_type {
         ReleaseType::Safe => "safe",
