@@ -7,6 +7,11 @@ use reqwest::{header::HeaderMap, Client, Response};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fmt;
+use std::path::{Path, PathBuf};
+use tar::Archive;
+use tokio::fs::File;
+use tokio::io::AsyncWriteExt;
+use zip::ZipArchive;
 
 const GITHUB_API_URL: &str = "https://api.github.com";
 const GITHUB_ORG_NAME: &str = "maidsafe";
@@ -33,6 +38,16 @@ impl fmt::Display for ReleaseType {
     }
 }
 
+impl ReleaseType {
+    pub fn get_base_url(&self) -> String {
+        match self {
+            ReleaseType::Safe => "https://sn-cli.s3.eu-west-2.amazonaws.com".to_string(),
+            ReleaseType::Safenode => "https://sn-node.s3.eu-west-2.amazonaws.com".to_string(),
+            ReleaseType::Testnet => "https://sn-testnet.s3.eu-west-2.amazonaws.com".to_string(),
+        }
+    }
+}
+
 lazy_static! {
     static ref RELEASE_TYPE_CRATE_NAME_MAP: HashMap<ReleaseType, &'static str> = {
         let mut m = HashMap::new();
@@ -42,6 +57,46 @@ lazy_static! {
         m
     };
 }
+
+#[derive(Clone, Eq, Hash, PartialEq)]
+pub enum Platform {
+    LinuxMusl,
+    LinuxMuslAarch64,
+    LinuxMuslArm,
+    LinuxMuslArmV7,
+    MacOs,
+    Windows,
+}
+
+impl fmt::Display for Platform {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Platform::LinuxMusl => write!(f, "x86_64-unknown-linux-musl"),
+            Platform::LinuxMuslAarch64 => write!(f, "aarch64-unknown-linux-musl"),
+            Platform::LinuxMuslArm => write!(f, "arm-unknown-linux-musleabi"),
+            Platform::LinuxMuslArmV7 => write!(f, "armv7-unknown-linux-musleabihf"),
+            Platform::MacOs => write!(f, "x86_64-apple-darwin"),
+            Platform::Windows => write!(f, "x86_64-pc-windows-msvc"), // This appears to be the same as the above, so I'm using the same string.
+        }
+    }
+}
+
+#[derive(Clone, Eq, Hash, PartialEq)]
+pub enum ArchiveType {
+    TarGz,
+    Zip,
+}
+
+impl fmt::Display for ArchiveType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ArchiveType::TarGz => write!(f, "tar.gz"),
+            ArchiveType::Zip => write!(f, "zip"),
+        }
+    }
+}
+
+type ProgressCallback = dyn Fn(u64, u64);
 
 /// Gets the latest version for a specified binary in the `safe_network` repository.
 ///
@@ -122,6 +177,126 @@ pub async fn get_latest_version(release_type: &ReleaseType) -> Result<String> {
         .0;
     let version = get_version_from_tag_name(&tag_name)?;
     Ok(version)
+}
+
+/// Downloads a release binary archive from S3.
+///
+/// # Arguments
+///
+/// - `release_type`: The type of release.
+/// - `version`: The version of the release.
+/// - `platform`: The target platform.
+/// - `archive_type`: The type of archive (e.g., tar.gz, zip).
+/// - `dest_path`: The directory where the downloaded archive will be stored.
+/// - `callback`: A callback function that can be used for download progress.
+///
+/// # Returns
+///
+/// A `Result` with `PathBuf` indicating the full path of the downloaded archive, or an error if
+/// the download or file write operation fails.
+pub async fn download_release_from_s3(
+    release_type: &ReleaseType,
+    version: &str,
+    platform: &Platform,
+    archive_type: &ArchiveType,
+    dest_path: &Path,
+    callback: &ProgressCallback,
+) -> Result<PathBuf> {
+    let archive_ext = archive_type.to_string();
+    let url = format!(
+        "{}/{}-{}-{}.{}",
+        release_type.get_base_url(),
+        release_type.to_string().to_lowercase(),
+        version,
+        platform.to_string(),
+        archive_type.to_string()
+    );
+
+    let client = Client::new();
+    let mut response = client.get(&url).send().await.unwrap();
+
+    let total_size = response
+        .headers()
+        .get("content-length")
+        .and_then(|ct_len| ct_len.to_str().ok())
+        .and_then(|ct_len| ct_len.parse::<u64>().ok())
+        .unwrap_or(0);
+
+    let mut downloaded: u64 = 0;
+    let archive_name = format!(
+        "{}-{}-{}.{}",
+        release_type.to_string().to_lowercase(),
+        version,
+        platform.to_string(),
+        archive_ext
+    );
+    let archive_path = dest_path.join(archive_name);
+    let mut out_file = File::create(&archive_path).await?;
+
+    while let Some(chunk) = response.chunk().await.unwrap() {
+        downloaded += chunk.len() as u64;
+        out_file.write_all(&chunk).await?;
+        callback(downloaded, total_size);
+    }
+
+    Ok(archive_path)
+}
+
+/// Extracts a release binary archive.
+///
+/// The archive will include a single binary file.
+///
+/// # Arguments
+///
+/// - `archive_path`: The path of the archive file to extract.
+/// - `dest_dir`: The directory where the archive should be extracted.
+///
+/// # Returns
+///
+/// A `Result` with `PathBuf` indicating the full path of the extracted binary.
+pub fn extract_release_archive(archive_path: &Path, dest_dir_path: &Path) -> Result<PathBuf> {
+    if !archive_path.exists() {
+        return Err(Error::Io(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            format!("Archive not found at: {:?}", archive_path),
+        )));
+    }
+
+    if archive_path.extension() == Some(std::ffi::OsStr::new("gz")) {
+        let archive_file = std::fs::File::open(archive_path)?;
+        let tarball = flate2::read::GzDecoder::new(archive_file);
+        let mut archive = Archive::new(tarball);
+        for file in archive.entries()? {
+            let mut file = file?;
+            let out_path = dest_dir_path.join(file.path()?);
+            file.unpack(&out_path)?;
+            return Ok(out_path);
+        }
+    } else if archive_path.extension() == Some(std::ffi::OsStr::new("zip")) {
+        let archive_file = std::fs::File::open(archive_path)?;
+        let mut archive = ZipArchive::new(archive_file)?;
+        for i in 0..archive.len() {
+            let mut file = archive.by_index(i)?;
+            let out_path = dest_dir_path.join(file.name());
+            if file.name().ends_with('/') {
+                std::fs::create_dir_all(&out_path)?;
+            } else {
+                let mut outfile = std::fs::File::create(&out_path)?;
+                std::io::copy(&mut file, &mut outfile)?;
+            }
+            return Ok(out_path);
+        }
+    } else {
+        return Err(Error::Io(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "Unsupported archive format",
+        )));
+    }
+
+    Err(Error::Io(std::io::Error::new(
+        std::io::ErrorKind::Other,
+        "Failed to extract archive",
+    )))
 }
 
 async fn get_releases_page(page: u32, per_page: u32) -> Result<Response> {
