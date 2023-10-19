@@ -9,7 +9,10 @@ env:
 jobs:
   build:
     name: build
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
@@ -79,7 +82,7 @@ jobs:
     - uses: EmbarkStudios/cargo-deny-action@v1
 
   tests:
-    name: unit test
+    name: tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -102,6 +105,11 @@ jobs:
         with:
           command: test
           args: --release
+      # It might be a little slow to run these sequentially, but I did see some
+      # intermittent failures and I think this may help. PRs will not be
+      # common for this repository anyway.
+      - shell: bash
+        run: cargo test --release -- --test-threads 1
 
   test-publish:
     name: test publish
