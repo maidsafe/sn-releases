@@ -21,6 +21,8 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error("Latest release not found for {0}")]
     LatestReleaseNotFound(String),
+    #[error("{0}")]
+    PlatformNotSupported(String),
     #[error(transparent)]
     ReqwestError(#[from] reqwest::Error),
     #[error("Release binary {0} was not found")]

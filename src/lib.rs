@@ -16,6 +16,7 @@ use lazy_static::lazy_static;
 use reqwest::{header::HeaderMap, Client, Response};
 use serde_json::Value;
 use std::collections::HashMap;
+use std::env::consts::{ARCH, OS};
 use std::fmt;
 use std::path::{Path, PathBuf};
 use tar::Archive;
@@ -386,5 +387,31 @@ impl SafeReleaseRepositoryInterface for SafeReleaseRepository {
             std::io::ErrorKind::Other,
             "Failed to extract archive",
         )))
+    }
+}
+
+pub fn get_running_platform() -> Result<Platform> {
+    match OS {
+        "linux" => match ARCH {
+            "x86_64" => Ok(Platform::LinuxMusl),
+            "armv7" => Ok(Platform::LinuxMuslArmV7),
+            "arm" => Ok(Platform::LinuxMuslArm),
+            "aarch64" => Ok(Platform::LinuxMuslAarch64),
+            &_ => Err(Error::PlatformNotSupported(format!(
+                "We currently do not have binaries for the {OS}/{ARCH} combination"
+            ))),
+        },
+        "windows" => {
+            if ARCH != "x86_64" {
+                return Err(Error::PlatformNotSupported(
+                    "We currently only have x86_64 binaries available for Windows".to_string(),
+                ));
+            }
+            Ok(Platform::Windows)
+        }
+        "macos" => Ok(Platform::MacOs),
+        &_ => Err(Error::PlatformNotSupported(format!(
+            "{OS} is not currently supported"
+        ))),
     }
 }
