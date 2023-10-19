@@ -5,6 +5,7 @@ description = "Download and unpack binaries released from the safe_network repos
 license = "GPL-3.0"
 version = "0.1.0"
 edition = "2021"
+repository = "https://github.com/maidsafe/sn-releases"
 
 [dependencies]
 async-trait = "0.1"
