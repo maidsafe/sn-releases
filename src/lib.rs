@@ -287,7 +287,10 @@ impl SafeReleaseRepositoryInterface for SafeReleaseRepository {
         );
 
         let client = Client::new();
-        let mut response = client.get(&url).send().await.unwrap();
+        let mut response = client.get(&url).send().await?;
+        if !response.status().is_success() {
+            return Err(Error::ReleaseBinaryNotFound(url));
+        }
 
         let total_size = response
             .headers()
