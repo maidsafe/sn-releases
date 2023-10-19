@@ -86,3 +86,9 @@ mod tests {
     }
 }
 ```
+
+## License
+
+This Safe Network repository is licensed under the General Public License (GPL), version 3 ([LICENSE](LICENSE) http://www.gnu.org/licenses/gpl-3.0.en.html).
+
+See the [LICENSE](LICENSE) file for more details.
