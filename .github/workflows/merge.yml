@@ -101,10 +101,6 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-cache-${{ hashFiles('**/Cargo.lock') }}
 
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --release
       # It might be a little slow to run these sequentially, but I did see some
       # intermittent failures and I think this may help. PRs will not be
       # common for this repository anyway.
