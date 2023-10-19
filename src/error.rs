@@ -15,6 +15,8 @@ pub enum Error {
     LatestReleaseNotFound(String),
     #[error(transparent)]
     ReqwestError(#[from] reqwest::Error),
+    #[error("Release binary {0} was not found")]
+    ReleaseBinaryNotFound(String),
     #[error("Could not parse version from tag name")]
     TagNameVersionParsingFailed,
     #[error(transparent)]
