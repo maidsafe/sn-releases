@@ -85,7 +85,7 @@ impl fmt::Display for Platform {
     }
 }
 
-#[derive(Clone, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum ArchiveType {
     TarGz,
     Zip,
