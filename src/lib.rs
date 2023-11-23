@@ -29,12 +29,15 @@ const GITHUB_ORG_NAME: &str = "maidsafe";
 const GITHUB_REPO_NAME: &str = "safe_network";
 const SAFE_S3_BASE_URL: &str = "https://sn-cli.s3.eu-west-2.amazonaws.com";
 const SAFENODE_S3_BASE_URL: &str = "https://sn-node.s3.eu-west-2.amazonaws.com";
+const SAFENODE_RPC_CLIENT_S3_BASE_URL: &str =
+    "https://sn-node-rpc-client.s3.eu-west-2.amazonaws.com";
 const TESTNET_S3_BASE_URL: &str = "https://sn-testnet.s3.eu-west-2.amazonaws.com";
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum ReleaseType {
     Safe,
     Safenode,
+    SafenodeRpcClient,
     Testnet,
 }
 
@@ -46,6 +49,7 @@ impl fmt::Display for ReleaseType {
             match self {
                 ReleaseType::Safe => "safe",
                 ReleaseType::Safenode => "safenode",
+                ReleaseType::SafenodeRpcClient => "safenode_rpc_client",
                 ReleaseType::Testnet => "testnet",
             }
         )
@@ -57,6 +61,7 @@ lazy_static! {
         let mut m = HashMap::new();
         m.insert(ReleaseType::Safe, "sn_cli");
         m.insert(ReleaseType::Safenode, "sn_node");
+        m.insert(ReleaseType::SafenodeRpcClient, "sn_node_rpc_client");
         m.insert(ReleaseType::Testnet, "sn_testnet");
         m
     };
@@ -124,6 +129,7 @@ impl dyn SafeReleaseRepositoryInterface {
             github_api_base_url: GITHUB_API_URL.to_string(),
             safe_base_url: SAFE_S3_BASE_URL.to_string(),
             safenode_base_url: SAFENODE_S3_BASE_URL.to_string(),
+            safenode_rpc_client_base_url: SAFENODE_RPC_CLIENT_S3_BASE_URL.to_string(),
             testnet_base_url: TESTNET_S3_BASE_URL.to_string(),
         })
     }
@@ -133,6 +139,7 @@ pub struct SafeReleaseRepository {
     pub github_api_base_url: String,
     pub safe_base_url: String,
     pub safenode_base_url: String,
+    pub safenode_rpc_client_base_url: String,
     pub testnet_base_url: String,
 }
 
@@ -141,6 +148,7 @@ impl SafeReleaseRepository {
         match release_type {
             ReleaseType::Safe => self.safe_base_url.clone(),
             ReleaseType::Safenode => self.safenode_base_url.clone(),
+            ReleaseType::SafenodeRpcClient => self.safenode_rpc_client_base_url.clone(),
             ReleaseType::Testnet => self.testnet_base_url.clone(),
         }
     }
@@ -226,7 +234,8 @@ impl SafeReleaseRepositoryInterface for SafeReleaseRepository {
                             (release.get("tag_name"), release.get("created_at"))
                         {
                             let created_at = created_at.parse::<DateTime<Utc>>()?;
-                            if tag_name.starts_with(target_tag_name) {
+                            let crate_name = tag_name.split('-').next().unwrap().to_string();
+                            if crate_name == target_tag_name {
                                 match latest_release {
                                     Some((_, date)) if created_at > date => {
                                         latest_release = Some((tag_name.clone(), created_at));

@@ -13,6 +13,7 @@ use sn_releases::{ArchiveType, Platform, ReleaseType, SafeReleaseRepositoryInter
 
 const SAFE_VERSION: &str = "0.83.51";
 const SAFENODE_VERSION: &str = "0.93.7";
+const SAFENODE_RPC_CLIENT_VERSION: &str = "0.1.40";
 const TESTNET_VERSION: &str = "0.2.213";
 
 async fn download_and_extract(
@@ -49,6 +50,7 @@ async fn download_and_extract(
     let binary_name = match release_type {
         ReleaseType::Safe => "safe",
         ReleaseType::Safenode => "safenode",
+        ReleaseType::SafenodeRpcClient => "safenode_rpc_client",
         ReleaseType::Testnet => "testnet",
     };
     let expected_binary_name = if *platform == Platform::Windows {
@@ -296,6 +298,75 @@ async fn should_download_and_extract_testnet_for_windows() {
     download_and_extract(
         &ReleaseType::Testnet,
         TESTNET_VERSION,
+        &Platform::Windows,
+        &ArchiveType::Zip,
+    )
+    .await;
+}
+
+///
+/// Safenode RPC client tests
+///
+#[tokio::test]
+async fn should_download_and_extract_safenode_rpc_client_for_linux_musl() {
+    download_and_extract(
+        &ReleaseType::SafenodeRpcClient,
+        SAFENODE_RPC_CLIENT_VERSION,
+        &Platform::LinuxMusl,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_safenode_rpc_client_for_linux_musl_aarch64() {
+    download_and_extract(
+        &ReleaseType::SafenodeRpcClient,
+        SAFENODE_RPC_CLIENT_VERSION,
+        &Platform::LinuxMuslAarch64,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_safenode_rpc_client_for_linux_musl_arm() {
+    download_and_extract(
+        &ReleaseType::SafenodeRpcClient,
+        SAFENODE_RPC_CLIENT_VERSION,
+        &Platform::LinuxMuslArm,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_safenode_rpc_client_for_linux_musl_arm_v7() {
+    download_and_extract(
+        &ReleaseType::SafenodeRpcClient,
+        SAFENODE_RPC_CLIENT_VERSION,
+        &Platform::LinuxMuslArmV7,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_safenode_rpc_client_for_macos() {
+    download_and_extract(
+        &ReleaseType::SafenodeRpcClient,
+        SAFENODE_RPC_CLIENT_VERSION,
+        &Platform::MacOs,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_safenode_rpc_client_for_windows() {
+    download_and_extract(
+        &ReleaseType::SafenodeRpcClient,
+        SAFENODE_RPC_CLIENT_VERSION,
         &Platform::Windows,
         &ArchiveType::Zip,
     )
