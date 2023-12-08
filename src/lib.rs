@@ -119,6 +119,12 @@ pub trait SafeReleaseRepositoryInterface {
         dest_path: &Path,
         callback: &ProgressCallback,
     ) -> Result<PathBuf>;
+    async fn download_release(
+        &self,
+        url: &str,
+        dest_dir_path: &Path,
+        callback: &ProgressCallback,
+    ) -> Result<PathBuf>;
     fn extract_release_archive(&self, archive_path: &Path, dest_dir_path: &Path)
         -> Result<PathBuf>;
 }
@@ -183,6 +189,37 @@ impl SafeReleaseRepository {
             .ok_or_else(|| Error::TagNameVersionParsingFailed)?
             .to_string();
         Ok(version.trim_start_matches('v').to_string())
+    }
+
+    async fn download_url(
+        &self,
+        url: &str,
+        dest_path: &PathBuf,
+        callback: &ProgressCallback,
+    ) -> Result<()> {
+        let client = Client::new();
+        let mut response = client.get(url).send().await?;
+        if !response.status().is_success() {
+            return Err(Error::ReleaseBinaryNotFound(url.to_string()));
+        }
+
+        let total_size = response
+            .headers()
+            .get("content-length")
+            .and_then(|ct_len| ct_len.to_str().ok())
+            .and_then(|ct_len| ct_len.parse::<u64>().ok())
+            .unwrap_or(0);
+
+        let mut downloaded: u64 = 0;
+        let mut out_file = File::create(&dest_path).await?;
+
+        while let Some(chunk) = response.chunk().await.unwrap() {
+            downloaded += chunk.len() as u64;
+            out_file.write_all(&chunk).await?;
+            callback(downloaded, total_size);
+        }
+
+        Ok(())
     }
 }
 
@@ -304,20 +341,6 @@ impl SafeReleaseRepositoryInterface for SafeReleaseRepository {
             archive_type
         );
 
-        let client = Client::new();
-        let mut response = client.get(&url).send().await?;
-        if !response.status().is_success() {
-            return Err(Error::ReleaseBinaryNotFound(url));
-        }
-
-        let total_size = response
-            .headers()
-            .get("content-length")
-            .and_then(|ct_len| ct_len.to_str().ok())
-            .and_then(|ct_len| ct_len.parse::<u64>().ok())
-            .unwrap_or(0);
-
-        let mut downloaded: u64 = 0;
         let archive_name = format!(
             "{}-{}-{}.{}",
             release_type.to_string().to_lowercase(),
@@ -326,15 +349,31 @@ impl SafeReleaseRepositoryInterface for SafeReleaseRepository {
             archive_ext
         );
         let archive_path = dest_path.join(archive_name);
-        let mut out_file = File::create(&archive_path).await?;
 
-        while let Some(chunk) = response.chunk().await.unwrap() {
-            downloaded += chunk.len() as u64;
-            out_file.write_all(&chunk).await?;
-            callback(downloaded, total_size);
-        }
+        self.download_url(&url, &archive_path, callback).await?;
 
         Ok(archive_path)
+    }
+
+    async fn download_release(
+        &self,
+        url: &str,
+        dest_dir_path: &Path,
+        callback: &ProgressCallback,
+    ) -> Result<PathBuf> {
+        if !url.ends_with(".tar.gz") && !url.ends_with(".zip") {
+            return Err(Error::UrlIsNotArchive);
+        }
+
+        let file_name = url
+            .split('/')
+            .last()
+            .ok_or_else(|| Error::CannotParseFilenameFromUrl)?;
+        let dest_path = dest_dir_path.join(file_name);
+
+        self.download_url(url, &dest_path, callback).await?;
+
+        Ok(dest_path)
     }
 
     /// Extracts a release binary archive.

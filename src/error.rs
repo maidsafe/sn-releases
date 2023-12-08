@@ -15,6 +15,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     #[error(transparent)]
     DateTimeParseError(#[from] chrono::ParseError),
+    #[error("Cannot parse file name from the URL")]
+    CannotParseFilenameFromUrl,
     #[error("Could not convert API response header links to string")]
     HeaderLinksToStrError,
     #[error(transparent)]
@@ -29,6 +31,8 @@ pub enum Error {
     ReleaseBinaryNotFound(String),
     #[error("Could not parse version from tag name")]
     TagNameVersionParsingFailed,
+    #[error("The URL must point to a zip or gzipped tar archive")]
+    UrlIsNotArchive,
     #[error(transparent)]
     ZipError(#[from] zip::result::ZipError),
 }
