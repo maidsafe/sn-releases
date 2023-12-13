@@ -48,6 +48,17 @@ async fn should_get_latest_version_of_safenode_rpc_client() {
 }
 
 #[tokio::test]
+async fn should_get_latest_version_of_safenode_manager() {
+    let release_type = ReleaseType::SafenodeManager;
+    let release_repo = <dyn SafeReleaseRepositoryInterface>::default_config();
+    let version = release_repo
+        .get_latest_version(&release_type)
+        .await
+        .unwrap();
+    assert!(valid_semver_format(&version));
+}
+
+#[tokio::test]
 async fn should_get_latest_version_of_testnet() {
     let release_type = ReleaseType::Testnet;
     let release_repo = <dyn SafeReleaseRepositoryInterface>::default_config();

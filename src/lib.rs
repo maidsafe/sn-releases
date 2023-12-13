@@ -29,6 +29,7 @@ const GITHUB_ORG_NAME: &str = "maidsafe";
 const GITHUB_REPO_NAME: &str = "safe_network";
 const SAFE_S3_BASE_URL: &str = "https://sn-cli.s3.eu-west-2.amazonaws.com";
 const SAFENODE_S3_BASE_URL: &str = "https://sn-node.s3.eu-west-2.amazonaws.com";
+const SAFENODE_MANAGER_S3_BASE_URL: &str = "https://sn-node-manager.s3.eu-west-2.amazonaws.com";
 const SAFENODE_RPC_CLIENT_S3_BASE_URL: &str =
     "https://sn-node-rpc-client.s3.eu-west-2.amazonaws.com";
 const TESTNET_S3_BASE_URL: &str = "https://sn-testnet.s3.eu-west-2.amazonaws.com";
@@ -37,6 +38,7 @@ const TESTNET_S3_BASE_URL: &str = "https://sn-testnet.s3.eu-west-2.amazonaws.com
 pub enum ReleaseType {
     Safe,
     Safenode,
+    SafenodeManager,
     SafenodeRpcClient,
     Testnet,
 }
@@ -49,10 +51,23 @@ impl fmt::Display for ReleaseType {
             match self {
                 ReleaseType::Safe => "safe",
                 ReleaseType::Safenode => "safenode",
+                ReleaseType::SafenodeManager => "safenode-manager",
                 ReleaseType::SafenodeRpcClient => "safenode_rpc_client",
                 ReleaseType::Testnet => "testnet",
             }
         )
+    }
+}
+
+impl ReleaseType {
+    pub fn get_repo_name(&self) -> String {
+        match &self {
+            ReleaseType::Safe
+            | ReleaseType::Safenode
+            | ReleaseType::SafenodeRpcClient
+            | ReleaseType::Testnet => "safe_network".to_string(),
+            ReleaseType::SafenodeManager => "sn-node-manager".to_string(),
+        }
     }
 }
 
@@ -61,6 +76,7 @@ lazy_static! {
         let mut m = HashMap::new();
         m.insert(ReleaseType::Safe, "sn_cli");
         m.insert(ReleaseType::Safenode, "sn_node");
+        m.insert(ReleaseType::SafenodeManager, "sn-node-manager");
         m.insert(ReleaseType::SafenodeRpcClient, "sn_node_rpc_client");
         m.insert(ReleaseType::Testnet, "sn_testnet");
         m
@@ -135,6 +151,7 @@ impl dyn SafeReleaseRepositoryInterface {
             github_api_base_url: GITHUB_API_URL.to_string(),
             safe_base_url: SAFE_S3_BASE_URL.to_string(),
             safenode_base_url: SAFENODE_S3_BASE_URL.to_string(),
+            safenode_manager_base_url: SAFENODE_MANAGER_S3_BASE_URL.to_string(),
             safenode_rpc_client_base_url: SAFENODE_RPC_CLIENT_S3_BASE_URL.to_string(),
             testnet_base_url: TESTNET_S3_BASE_URL.to_string(),
         })
@@ -145,6 +162,7 @@ pub struct SafeReleaseRepository {
     pub github_api_base_url: String,
     pub safe_base_url: String,
     pub safenode_base_url: String,
+    pub safenode_manager_base_url: String,
     pub safenode_rpc_client_base_url: String,
     pub testnet_base_url: String,
 }
@@ -154,9 +172,31 @@ impl SafeReleaseRepository {
         match release_type {
             ReleaseType::Safe => self.safe_base_url.clone(),
             ReleaseType::Safenode => self.safenode_base_url.clone(),
+            ReleaseType::SafenodeManager => self.safenode_manager_base_url.clone(),
             ReleaseType::SafenodeRpcClient => self.safenode_rpc_client_base_url.clone(),
             ReleaseType::Testnet => self.testnet_base_url.clone(),
         }
+    }
+
+    async fn get_latest_release_tag(&self, release_type: &ReleaseType) -> Result<String> {
+        let client = Client::new();
+        let response = client
+            .get(format!(
+                "{}/repos/{}/{}/releases/latest",
+                self.github_api_base_url,
+                GITHUB_ORG_NAME,
+                release_type.get_repo_name()
+            ))
+            .header("User-Agent", "request")
+            .send()
+            .await?;
+
+        let latest_release = response.json::<Value>().await?;
+        if let Some(Value::String(tag_name)) = latest_release.get("tag_name") {
+            return Ok(tag_name.trim_start_matches('v').to_string());
+        }
+
+        Err(Error::MalformedLatestReleaseResponse)
     }
 
     async fn get_releases_page(&self, page: u32, per_page: u32) -> Result<Response> {
@@ -225,7 +265,10 @@ impl SafeReleaseRepository {
 
 #[async_trait]
 impl SafeReleaseRepositoryInterface for SafeReleaseRepository {
-    /// Gets the latest version for a specified binary in the `safe_network` repository.
+    /// Gets the latest version for a specified binary.
+    ///
+    /// If we are looking for a node manager release, this is not a workspace repo, so we can
+    /// simply use the latest release API. Otherwise, we will query the `safe_network` repo.
     ///
     /// Each release in the repository is checked, starting from the most recent. The `safe_network`
     /// repository is a workspace to which many binaries are released, so it's not possible to use the
@@ -252,6 +295,10 @@ impl SafeReleaseRepositoryInterface for SafeReleaseRepository {
     /// - The received JSON data from the API is not as expected
     /// - No releases are found that match the specified `ReleaseType`
     async fn get_latest_version(&self, release_type: &ReleaseType) -> Result<String> {
+        if *release_type == ReleaseType::SafenodeManager {
+            return self.get_latest_release_tag(release_type).await;
+        }
+
         let mut page = 1;
         let per_page = 100;
         let mut latest_release: Option<(String, DateTime<Utc>)> = None;
