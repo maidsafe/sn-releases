@@ -27,6 +27,7 @@ use zip::ZipArchive;
 const GITHUB_API_URL: &str = "https://api.github.com";
 const GITHUB_ORG_NAME: &str = "maidsafe";
 const GITHUB_REPO_NAME: &str = "safe_network";
+const FAUCET_S3_BASE_URL: &str = "https://sn-faucet.s3.eu-west-2.amazonaws.com";
 const SAFE_S3_BASE_URL: &str = "https://sn-cli.s3.eu-west-2.amazonaws.com";
 const SAFENODE_S3_BASE_URL: &str = "https://sn-node.s3.eu-west-2.amazonaws.com";
 const SAFENODE_MANAGER_S3_BASE_URL: &str = "https://sn-node-manager.s3.eu-west-2.amazonaws.com";
@@ -36,6 +37,7 @@ const TESTNET_S3_BASE_URL: &str = "https://sn-testnet.s3.eu-west-2.amazonaws.com
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum ReleaseType {
+    Faucet,
     Safe,
     Safenode,
     SafenodeManager,
@@ -49,6 +51,7 @@ impl fmt::Display for ReleaseType {
             f,
             "{}",
             match self {
+                ReleaseType::Faucet => "faucet",
                 ReleaseType::Safe => "safe",
                 ReleaseType::Safenode => "safenode",
                 ReleaseType::SafenodeManager => "safenode-manager",
@@ -62,7 +65,8 @@ impl fmt::Display for ReleaseType {
 impl ReleaseType {
     pub fn get_repo_name(&self) -> String {
         match &self {
-            ReleaseType::Safe
+            ReleaseType::Faucet
+            | ReleaseType::Safe
             | ReleaseType::Safenode
             | ReleaseType::SafenodeRpcClient
             | ReleaseType::Testnet => "safe_network".to_string(),
@@ -74,6 +78,7 @@ impl ReleaseType {
 lazy_static! {
     static ref RELEASE_TYPE_CRATE_NAME_MAP: HashMap<ReleaseType, &'static str> = {
         let mut m = HashMap::new();
+        m.insert(ReleaseType::Faucet, "sn_faucet");
         m.insert(ReleaseType::Safe, "sn_cli");
         m.insert(ReleaseType::Safenode, "sn_node");
         m.insert(ReleaseType::SafenodeManager, "sn-node-manager");
@@ -149,6 +154,7 @@ impl dyn SafeReleaseRepositoryInterface {
     pub fn default_config() -> Box<dyn SafeReleaseRepositoryInterface> {
         Box::new(SafeReleaseRepository {
             github_api_base_url: GITHUB_API_URL.to_string(),
+            faucet_base_url: FAUCET_S3_BASE_URL.to_string(),
             safe_base_url: SAFE_S3_BASE_URL.to_string(),
             safenode_base_url: SAFENODE_S3_BASE_URL.to_string(),
             safenode_manager_base_url: SAFENODE_MANAGER_S3_BASE_URL.to_string(),
@@ -160,6 +166,7 @@ impl dyn SafeReleaseRepositoryInterface {
 
 pub struct SafeReleaseRepository {
     pub github_api_base_url: String,
+    pub faucet_base_url: String,
     pub safe_base_url: String,
     pub safenode_base_url: String,
     pub safenode_manager_base_url: String,
@@ -170,6 +177,7 @@ pub struct SafeReleaseRepository {
 impl SafeReleaseRepository {
     fn get_base_url(&self, release_type: &ReleaseType) -> String {
         match release_type {
+            ReleaseType::Faucet => self.faucet_base_url.clone(),
             ReleaseType::Safe => self.safe_base_url.clone(),
             ReleaseType::Safenode => self.safenode_base_url.clone(),
             ReleaseType::SafenodeManager => self.safenode_manager_base_url.clone(),
