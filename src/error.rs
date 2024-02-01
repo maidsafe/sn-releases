@@ -15,16 +15,18 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     #[error("Cannot parse file name from the URL")]
     CannotParseFilenameFromUrl,
+    #[error("Unexpected response from crates.io: {0}")]
+    CratesIoResponseError(u16),
     #[error(transparent)]
     DateTimeParseError(#[from] chrono::ParseError),
     #[error("Could not convert API response header links to string")]
     HeaderLinksToStrError,
     #[error(transparent)]
     Io(#[from] std::io::Error),
+    #[error(transparent)]
+    JsonError(#[from] serde_json::Error),
     #[error("Latest release not found for {0}")]
     LatestReleaseNotFound(String),
-    #[error("The Github API's latest release response document was not in the expected format")]
-    MalformedLatestReleaseResponse,
     #[error("{0}")]
     PlatformNotSupported(String),
     #[error(transparent)]

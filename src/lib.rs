@@ -11,9 +11,8 @@ pub use crate::error::{Error, Result};
 pub mod error;
 
 use async_trait::async_trait;
-use chrono::{DateTime, Duration, Utc};
 use lazy_static::lazy_static;
-use reqwest::{header::HeaderMap, Client, Response};
+use reqwest::Client;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::env::consts::{ARCH, OS};
@@ -25,8 +24,6 @@ use tokio::io::AsyncWriteExt;
 use zip::ZipArchive;
 
 const GITHUB_API_URL: &str = "https://api.github.com";
-const GITHUB_ORG_NAME: &str = "maidsafe";
-const GITHUB_REPO_NAME: &str = "safe_network";
 const FAUCET_S3_BASE_URL: &str = "https://sn-faucet.s3.eu-west-2.amazonaws.com";
 const SAFE_S3_BASE_URL: &str = "https://sn-cli.s3.eu-west-2.amazonaws.com";
 const SAFENODE_S3_BASE_URL: &str = "https://sn-node.s3.eu-west-2.amazonaws.com";
@@ -56,18 +53,6 @@ impl fmt::Display for ReleaseType {
                 ReleaseType::SafenodeRpcClient => "safenode_rpc_client",
             }
         )
-    }
-}
-
-impl ReleaseType {
-    pub fn get_repo_name(&self) -> String {
-        match &self {
-            ReleaseType::Faucet
-            | ReleaseType::Safe
-            | ReleaseType::Safenode
-            | ReleaseType::SafenodeRpcClient => "safe_network".to_string(),
-            ReleaseType::SafenodeManager => "sn-node-manager".to_string(),
-        }
     }
 }
 
@@ -178,59 +163,6 @@ impl SafeReleaseRepository {
         }
     }
 
-    async fn get_latest_release_tag(&self, release_type: &ReleaseType) -> Result<String> {
-        let client = Client::new();
-        let response = client
-            .get(format!(
-                "{}/repos/{}/{}/releases/latest",
-                self.github_api_base_url,
-                GITHUB_ORG_NAME,
-                release_type.get_repo_name()
-            ))
-            .header("User-Agent", "request")
-            .send()
-            .await?;
-
-        let latest_release = response.json::<Value>().await?;
-        if let Some(Value::String(tag_name)) = latest_release.get("tag_name") {
-            return Ok(tag_name.trim_start_matches('v').to_string());
-        }
-
-        Err(Error::MalformedLatestReleaseResponse)
-    }
-
-    async fn get_releases_page(&self, page: u32, per_page: u32) -> Result<Response> {
-        let client = Client::new();
-        let response = client
-            .get(format!(
-                "{}/repos/{}/{}/releases?page={}&per_page={}",
-                self.github_api_base_url, GITHUB_ORG_NAME, GITHUB_REPO_NAME, page, per_page
-            ))
-            .header("User-Agent", "request")
-            .send()
-            .await?;
-        Ok(response)
-    }
-
-    async fn has_next_page(&self, headers: &HeaderMap) -> Result<bool> {
-        if let Some(links) = headers.get("link") {
-            let links = links.to_str().map_err(|_| Error::HeaderLinksToStrError)?;
-            Ok(links.split(',').any(|link| link.contains("rel=\"next\"")))
-        } else {
-            Ok(false)
-        }
-    }
-
-    fn get_version_from_tag_name(&self, tag_name: &str) -> Result<String> {
-        let mut parts = tag_name.split('-');
-        parts.next();
-        let version = parts
-            .next()
-            .ok_or_else(|| Error::TagNameVersionParsingFailed)?
-            .to_string();
-        Ok(version.trim_start_matches('v').to_string())
-    }
-
     async fn download_url(
         &self,
         url: &str,
@@ -265,19 +197,7 @@ impl SafeReleaseRepository {
 
 #[async_trait]
 impl SafeReleaseRepositoryInterface for SafeReleaseRepository {
-    /// Gets the latest version for a specified binary.
-    ///
-    /// If we are looking for a node manager release, this is not a workspace repo, so we can
-    /// simply use the latest release API. Otherwise, we will query the `safe_network` repo.
-    ///
-    /// Each release in the repository is checked, starting from the most recent. The `safe_network`
-    /// repository is a workspace to which many binaries are released, so it's not possible to use the
-    /// more straight forward Github API which simply returns the latest release, since that's going to
-    /// be the version number for one of many binaries.
-    ///
-    /// During the search, if a release is found that was created more than 14 days ago, the function
-    /// will stop searching through older releases, which will avoid fetching further pages from the
-    /// Github API.
+    /// Uses the crates.io API to obtain the latest version of a crate.
     ///
     /// # Arguments
     ///
@@ -291,67 +211,30 @@ impl SafeReleaseRepositoryInterface for SafeReleaseRepository {
     /// # Errors
     ///
     /// This function will return an error if:
-    /// - The HTTP request to GitHub API fails
-    /// - The received JSON data from the API is not as expected
-    /// - No releases are found that match the specified `ReleaseType`
+    /// - The HTTP request to crates.io API fails
+    /// - The received JSON data does not have a `crate.newest_version` value
     async fn get_latest_version(&self, release_type: &ReleaseType) -> Result<String> {
-        if *release_type == ReleaseType::SafenodeManager {
-            return self.get_latest_release_tag(release_type).await;
+        let crate_name = *RELEASE_TYPE_CRATE_NAME_MAP.get(release_type).unwrap();
+        let url = format!("https://crates.io/api/v1/crates/{}", crate_name);
+
+        let client = reqwest::Client::new();
+        let response = client
+            .get(url)
+            .header("User-Agent", "reqwest")
+            .send()
+            .await?;
+        if !response.status().is_success() {
+            return Err(Error::CratesIoResponseError(response.status().as_u16()));
         }
 
-        let mut page = 1;
-        let per_page = 100;
-        let mut latest_release: Option<(String, DateTime<Utc>)> = None;
-        let target_tag_name = *RELEASE_TYPE_CRATE_NAME_MAP.get(release_type).unwrap();
-        let now = Utc::now();
+        let body = response.text().await?;
+        let json: Value = serde_json::from_str(&body)?;
 
-        loop {
-            let response = self.get_releases_page(page, per_page).await?;
-            let headers = response.headers().clone();
-            let releases = response.json::<Value>().await?;
-
-            let mut continue_search = true;
-            if let Value::Array(releases) = releases {
-                for release in releases {
-                    if let Value::Object(release) = release {
-                        if let (Some(Value::String(tag_name)), Some(Value::String(created_at))) =
-                            (release.get("tag_name"), release.get("created_at"))
-                        {
-                            let created_at = created_at.parse::<DateTime<Utc>>()?;
-                            let crate_name = tag_name.split('-').next().unwrap().to_string();
-                            if crate_name == target_tag_name {
-                                match latest_release {
-                                    Some((_, date)) if created_at > date => {
-                                        latest_release = Some((tag_name.clone(), created_at));
-                                    }
-                                    None => {
-                                        latest_release = Some((tag_name.clone(), created_at));
-                                    }
-                                    _ => {}
-                                }
-                            }
-
-                            if now.signed_duration_since(created_at) > Duration::days(14) {
-                                continue_search = false;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            if continue_search && self.has_next_page(&headers).await? {
-                page += 1;
-            } else {
-                break;
-            }
+        if let Some(version) = json["crate"]["newest_version"].as_str() {
+            return Ok(version.to_string());
         }
 
-        let tag_name = latest_release
-            .ok_or_else(|| Error::LatestReleaseNotFound(release_type.to_string()))?
-            .0;
-        let version = self.get_version_from_tag_name(&tag_name)?;
-        Ok(version)
+        Err(Error::LatestReleaseNotFound(release_type.to_string()))
     }
 
     /// Downloads a release binary archive from S3.
