@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.7](https://github.com/maidsafe/sn-releases/compare/v0.1.6...v0.1.7) - 2024-02-01
+
+### Other
+- update license year
+- retrieve latest release from crates.io
+- remove testnet from release type
+
 ## [0.1.6](https://github.com/maidsafe/sn-releases/compare/v0.1.5...v0.1.6) - 2023-12-21
 
 ### Added
