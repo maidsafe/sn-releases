@@ -37,6 +37,7 @@ pub enum ReleaseType {
     Safe,
     Safenode,
     SafenodeManager,
+    SafenodeManagerDaemon,
     SafenodeRpcClient,
 }
 
@@ -50,6 +51,7 @@ impl fmt::Display for ReleaseType {
                 ReleaseType::Safe => "safe",
                 ReleaseType::Safenode => "safenode",
                 ReleaseType::SafenodeManager => "safenode-manager",
+                ReleaseType::SafenodeManagerDaemon => "safenodemand",
                 ReleaseType::SafenodeRpcClient => "safenode_rpc_client",
             }
         )
@@ -63,6 +65,7 @@ lazy_static! {
         m.insert(ReleaseType::Safe, "sn_cli");
         m.insert(ReleaseType::Safenode, "sn_node");
         m.insert(ReleaseType::SafenodeManager, "sn-node-manager");
+        m.insert(ReleaseType::SafenodeManagerDaemon, "sn-node-manager");
         m.insert(ReleaseType::SafenodeRpcClient, "sn_node_rpc_client");
         m
     };
@@ -159,6 +162,7 @@ impl SafeReleaseRepository {
             ReleaseType::Safe => self.safe_base_url.clone(),
             ReleaseType::Safenode => self.safenode_base_url.clone(),
             ReleaseType::SafenodeManager => self.safenode_manager_base_url.clone(),
+            ReleaseType::SafenodeManagerDaemon => self.safenode_manager_base_url.clone(),
             ReleaseType::SafenodeRpcClient => self.safenode_rpc_client_base_url.clone(),
         }
     }
