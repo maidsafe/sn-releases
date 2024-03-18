@@ -67,7 +67,7 @@ async fn download_and_extract(
 }
 
 #[tokio::test]
-async fn should_fail_when_trying_to_download_invalid_combination() {
+async fn should_fail_when_trying_to_download_with_invalid_version() {
     let dest_dir = assert_fs::TempDir::new().unwrap();
     let download_dir = dest_dir.child("download_to");
     download_dir.create_dir_all().unwrap();
@@ -91,10 +91,8 @@ async fn should_fail_when_trying_to_download_invalid_combination() {
     match result {
         Ok(_) => panic!("This test should result in a failure"),
         Err(e) => match e {
-            Error::ReleaseBinaryNotFound(url) => {
-                assert_eq!(url, "https://sn-cli.s3.eu-west-2.amazonaws.com/safe-x.y.z-x86_64-unknown-linux-musl.tar.gz");
-            }
-            _ => panic!("The error type should be ReleaseBinaryNotFound"),
+            Error::InvalidVersionFormat(_) => {}
+            _ => panic!("The error type should be InvalidVersionFormat. Got {e:?}"),
         },
     }
 }

@@ -261,6 +261,13 @@ impl SafeReleaseRepositoryInterface for SafeReleaseRepository {
         dest_path: &Path,
         callback: &ProgressCallback,
     ) -> Result<PathBuf> {
+        // parse version str.
+        let version_pattern =
+            regex::Regex::new(r"^\d+\.\d+\.\d+$").map_err(|_| Error::RegexError)?;
+        if !version_pattern.is_match(version) {
+            return Err(Error::InvalidVersionFormat(version.to_string()));
+        }
+
         let archive_ext = archive_type.to_string();
         let url = format!(
             "{}/{}-{}-{}.{}",
