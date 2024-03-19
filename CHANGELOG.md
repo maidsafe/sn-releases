@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0](https://github.com/maidsafe/sn-releases/compare/v0.1.9...v0.2.0) - 2024-03-19
+
+### Other
+- use version type rather than strings
+- rename release interface
+
 ## [0.1.9](https://github.com/maidsafe/sn-releases/compare/v0.1.8...v0.1.9) - 2024-03-19
 
 ### Added
