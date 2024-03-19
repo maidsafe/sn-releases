@@ -9,7 +9,7 @@
 use assert_fs::prelude::*;
 use predicates::prelude::*;
 use sn_releases::error::Error;
-use sn_releases::{ArchiveType, Platform, ReleaseType, SafeReleaseRepositoryInterface};
+use sn_releases::{ArchiveType, Platform, ReleaseType, SafeReleaseRepoActions};
 
 const FAUCET_VERSION: &str = "0.1.98";
 const SAFE_VERSION: &str = "0.83.51";
@@ -32,7 +32,7 @@ async fn download_and_extract(
 
     let progress_callback = |_downloaded: u64, _total: u64| {};
 
-    let release_repo = <dyn SafeReleaseRepositoryInterface>::default_config();
+    let release_repo = <dyn SafeReleaseRepoActions>::default_config();
     let archive_path = release_repo
         .download_release_from_s3(
             release_type,
@@ -78,7 +78,7 @@ async fn should_fail_when_trying_to_download_with_invalid_version() {
 
     let progress_callback = |_downloaded: u64, _total: u64| {};
 
-    let release_repo = <dyn SafeReleaseRepositoryInterface>::default_config();
+    let release_repo = <dyn SafeReleaseRepoActions>::default_config();
     let result = release_repo
         .download_release_from_s3(
             &ReleaseType::Safe,

@@ -112,7 +112,7 @@ impl fmt::Display for ArchiveType {
 pub type ProgressCallback = dyn Fn(u64, u64) + Send + Sync;
 
 #[async_trait]
-pub trait SafeReleaseRepositoryInterface {
+pub trait SafeReleaseRepoActions {
     async fn get_latest_version(&self, release_type: &ReleaseType) -> Result<String>;
     async fn download_release_from_s3(
         &self,
@@ -133,8 +133,8 @@ pub trait SafeReleaseRepositoryInterface {
         -> Result<PathBuf>;
 }
 
-impl dyn SafeReleaseRepositoryInterface {
-    pub fn default_config() -> Box<dyn SafeReleaseRepositoryInterface> {
+impl dyn SafeReleaseRepoActions {
+    pub fn default_config() -> Box<dyn SafeReleaseRepoActions> {
         Box::new(SafeReleaseRepository {
             github_api_base_url: GITHUB_API_URL.to_string(),
             faucet_base_url: FAUCET_S3_BASE_URL.to_string(),
@@ -200,7 +200,7 @@ impl SafeReleaseRepository {
 }
 
 #[async_trait]
-impl SafeReleaseRepositoryInterface for SafeReleaseRepository {
+impl SafeReleaseRepoActions for SafeReleaseRepository {
     /// Uses the crates.io API to obtain the latest version of a crate.
     ///
     /// # Arguments

@@ -8,7 +8,7 @@
 
 use assert_fs::prelude::*;
 use sn_releases::error::Error;
-use sn_releases::SafeReleaseRepositoryInterface;
+use sn_releases::SafeReleaseRepoActions;
 
 #[tokio::test]
 async fn should_download_a_custom_binary() {
@@ -20,7 +20,7 @@ async fn should_download_a_custom_binary() {
 
     let url = "https://sn-node.s3.eu-west-2.amazonaws.com/jacderida/file-upload-address/safenode-charlie-x86_64-unknown-linux-musl.tar.gz";
     let progress_callback = |_downloaded: u64, _total: u64| {};
-    let release_repo = <dyn SafeReleaseRepositoryInterface>::default_config();
+    let release_repo = <dyn SafeReleaseRepoActions>::default_config();
     release_repo
         .download_release(url, &download_dir, &progress_callback)
         .await
@@ -37,7 +37,7 @@ async fn should_fail_to_download_non_archive() {
 
     let url = "https://sn-node.s3.eu-west-2.amazonaws.com/jacderida/file-upload-address/safenode-charlie-x86_64-unknown-linux-musl.txt";
     let progress_callback = |_downloaded: u64, _total: u64| {};
-    let release_repo = <dyn SafeReleaseRepositoryInterface>::default_config();
+    let release_repo = <dyn SafeReleaseRepoActions>::default_config();
     let result = release_repo
         .download_release(url, &download_dir, &progress_callback)
         .await;
