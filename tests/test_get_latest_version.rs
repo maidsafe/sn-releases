@@ -7,7 +7,7 @@
 // permissions and limitations relating to use of the SAFE Network Software.
 
 use regex::Regex;
-use sn_releases::{ReleaseType, SafeReleaseRepositoryInterface};
+use sn_releases::{ReleaseType, SafeReleaseRepoActions};
 
 fn valid_semver_format(version: &str) -> bool {
     let re = Regex::new(r"^\d+\.\d+\.\d+$").unwrap();
@@ -17,7 +17,7 @@ fn valid_semver_format(version: &str) -> bool {
 #[tokio::test]
 async fn should_get_latest_version_of_faucet() {
     let release_type = ReleaseType::Faucet;
-    let release_repo = <dyn SafeReleaseRepositoryInterface>::default_config();
+    let release_repo = <dyn SafeReleaseRepoActions>::default_config();
     let version = release_repo
         .get_latest_version(&release_type)
         .await
@@ -28,7 +28,7 @@ async fn should_get_latest_version_of_faucet() {
 #[tokio::test]
 async fn should_get_latest_version_of_safe() {
     let release_type = ReleaseType::Safe;
-    let release_repo = <dyn SafeReleaseRepositoryInterface>::default_config();
+    let release_repo = <dyn SafeReleaseRepoActions>::default_config();
     let version = release_repo
         .get_latest_version(&release_type)
         .await
@@ -39,7 +39,7 @@ async fn should_get_latest_version_of_safe() {
 #[tokio::test]
 async fn should_get_latest_version_of_safenode() {
     let release_type = ReleaseType::Safenode;
-    let release_repo = <dyn SafeReleaseRepositoryInterface>::default_config();
+    let release_repo = <dyn SafeReleaseRepoActions>::default_config();
     let version = release_repo
         .get_latest_version(&release_type)
         .await
@@ -50,7 +50,7 @@ async fn should_get_latest_version_of_safenode() {
 #[tokio::test]
 async fn should_get_latest_version_of_safenode_rpc_client() {
     let release_type = ReleaseType::SafenodeRpcClient;
-    let release_repo = <dyn SafeReleaseRepositoryInterface>::default_config();
+    let release_repo = <dyn SafeReleaseRepoActions>::default_config();
     let version = release_repo
         .get_latest_version(&release_type)
         .await
@@ -61,7 +61,7 @@ async fn should_get_latest_version_of_safenode_rpc_client() {
 #[tokio::test]
 async fn should_get_latest_version_of_safenode_manager() {
     let release_type = ReleaseType::SafenodeManager;
-    let release_repo = <dyn SafeReleaseRepositoryInterface>::default_config();
+    let release_repo = <dyn SafeReleaseRepoActions>::default_config();
     let version = release_repo
         .get_latest_version(&release_type)
         .await
@@ -72,7 +72,7 @@ async fn should_get_latest_version_of_safenode_manager() {
 #[tokio::test]
 async fn should_get_latest_version_of_safenodemand() {
     let release_type = ReleaseType::SafenodeManagerDaemon;
-    let release_repo = <dyn SafeReleaseRepositoryInterface>::default_config();
+    let release_repo = <dyn SafeReleaseRepoActions>::default_config();
     let version = release_repo
         .get_latest_version(&release_type)
         .await
