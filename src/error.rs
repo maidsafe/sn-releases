@@ -21,8 +21,6 @@ pub enum Error {
     DateTimeParseError(#[from] chrono::ParseError),
     #[error("Could not convert API response header links to string")]
     HeaderLinksToStrError,
-    #[error("The version string is invalid: {0}")]
-    InvalidVersionFormat(String),
     #[error(transparent)]
     Io(#[from] std::io::Error),
     #[error(transparent)]
@@ -37,6 +35,8 @@ pub enum Error {
     ReqwestError(#[from] reqwest::Error),
     #[error("Release binary {0} was not found")]
     ReleaseBinaryNotFound(String),
+    #[error(transparent)]
+    SemVerError(#[from] semver::Error),
     #[error("Could not parse version from tag name")]
     TagNameVersionParsingFailed,
     #[error("The URL must point to a zip or gzipped tar archive")]

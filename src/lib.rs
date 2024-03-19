@@ -13,6 +13,7 @@ pub mod error;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use reqwest::Client;
+use semver::Version;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::env::consts::{ARCH, OS};
@@ -113,11 +114,11 @@ pub type ProgressCallback = dyn Fn(u64, u64) + Send + Sync;
 
 #[async_trait]
 pub trait SafeReleaseRepoActions {
-    async fn get_latest_version(&self, release_type: &ReleaseType) -> Result<String>;
+    async fn get_latest_version(&self, release_type: &ReleaseType) -> Result<Version>;
     async fn download_release_from_s3(
         &self,
         release_type: &ReleaseType,
-        version: &str,
+        version: &Version,
         platform: &Platform,
         archive_type: &ArchiveType,
         dest_path: &Path,
@@ -217,7 +218,7 @@ impl SafeReleaseRepoActions for SafeReleaseRepository {
     /// This function will return an error if:
     /// - The HTTP request to crates.io API fails
     /// - The received JSON data does not have a `crate.newest_version` value
-    async fn get_latest_version(&self, release_type: &ReleaseType) -> Result<String> {
+    async fn get_latest_version(&self, release_type: &ReleaseType) -> Result<Version> {
         let crate_name = *RELEASE_TYPE_CRATE_NAME_MAP.get(release_type).unwrap();
         let url = format!("https://crates.io/api/v1/crates/{}", crate_name);
 
@@ -235,7 +236,7 @@ impl SafeReleaseRepoActions for SafeReleaseRepository {
         let json: Value = serde_json::from_str(&body)?;
 
         if let Some(version) = json["crate"]["newest_version"].as_str() {
-            return Ok(version.to_string());
+            return Ok(Version::parse(version)?);
         }
 
         Err(Error::LatestReleaseNotFound(release_type.to_string()))
@@ -259,19 +260,12 @@ impl SafeReleaseRepoActions for SafeReleaseRepository {
     async fn download_release_from_s3(
         &self,
         release_type: &ReleaseType,
-        version: &str,
+        version: &Version,
         platform: &Platform,
         archive_type: &ArchiveType,
         dest_path: &Path,
         callback: &ProgressCallback,
     ) -> Result<PathBuf> {
-        // parse version str.
-        let version_pattern =
-            regex::Regex::new(r"^\d+\.\d+\.\d+$").map_err(|_| Error::RegexError)?;
-        if !version_pattern.is_match(version) {
-            return Err(Error::InvalidVersionFormat(version.to_string()));
-        }
-
         let archive_ext = archive_type.to_string();
         let url = format!(
             "{}/{}-{}-{}.{}",
