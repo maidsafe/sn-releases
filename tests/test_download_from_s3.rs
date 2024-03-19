@@ -8,7 +8,7 @@
 
 use assert_fs::prelude::*;
 use predicates::prelude::*;
-use sn_releases::error::Error;
+use semver::Version;
 use sn_releases::{ArchiveType, Platform, ReleaseType, SafeReleaseRepoActions};
 
 const FAUCET_VERSION: &str = "0.1.98";
@@ -36,7 +36,7 @@ async fn download_and_extract(
     let archive_path = release_repo
         .download_release_from_s3(
             release_type,
-            version,
+            &Version::parse(version).unwrap(),
             platform,
             archive_type,
             &download_dir,
@@ -66,37 +66,6 @@ async fn download_and_extract(
     let binary_path = extract_dir.child(expected_binary_name);
     binary_path.assert(predicate::path::is_file());
     assert_eq!(binary_path.to_path_buf(), extracted_path);
-}
-
-#[tokio::test]
-async fn should_fail_when_trying_to_download_with_invalid_version() {
-    let dest_dir = assert_fs::TempDir::new().unwrap();
-    let download_dir = dest_dir.child("download_to");
-    download_dir.create_dir_all().unwrap();
-    let extract_dir = dest_dir.child("extract_to");
-    extract_dir.create_dir_all().unwrap();
-
-    let progress_callback = |_downloaded: u64, _total: u64| {};
-
-    let release_repo = <dyn SafeReleaseRepoActions>::default_config();
-    let result = release_repo
-        .download_release_from_s3(
-            &ReleaseType::Safe,
-            "x.y.z",
-            &Platform::LinuxMusl,
-            &ArchiveType::TarGz,
-            &download_dir,
-            &progress_callback,
-        )
-        .await;
-
-    match result {
-        Ok(_) => panic!("This test should result in a failure"),
-        Err(e) => match e {
-            Error::InvalidVersionFormat(_) => {}
-            _ => panic!("The error type should be InvalidVersionFormat. Got {e:?}"),
-        },
-    }
 }
 
 ///
