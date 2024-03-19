@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.8](https://github.com/maidsafe/sn-releases/compare/v0.1.7...v0.1.8) - 2024-03-19
+
+### Added
+- validate the provided semantic version str
+
 ## [0.1.7](https://github.com/maidsafe/sn-releases/compare/v0.1.6...v0.1.7) - 2024-02-01
 
 ### Other
