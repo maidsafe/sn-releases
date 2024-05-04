@@ -12,6 +12,7 @@ use semver::Version;
 use sn_releases::{ArchiveType, Platform, ReleaseType, SafeReleaseRepoActions};
 
 const FAUCET_VERSION: &str = "0.1.98";
+const NODE_LAUNCHPAD_VERSION: &str = "0.1.0-alpha.0";
 const SAFE_VERSION: &str = "0.83.51";
 const SAFENODE_VERSION: &str = "0.93.7";
 const SAFENODE_MANAGER_VERSION: &str = "0.1.8";
@@ -51,6 +52,7 @@ async fn download_and_extract(
 
     let binary_name = match release_type {
         ReleaseType::Faucet => "faucet",
+        ReleaseType::NodeLaunchpad => "node-launchpad",
         ReleaseType::Safe => "safe",
         ReleaseType::Safenode => "safenode",
         ReleaseType::SafenodeManager => "safenode-manager",
@@ -476,6 +478,75 @@ async fn should_download_and_extract_safenodemand_for_windows() {
     download_and_extract(
         &ReleaseType::SafenodeManagerDaemon,
         SAFENODE_MANAGERD_VERSION,
+        &Platform::Windows,
+        &ArchiveType::Zip,
+    )
+    .await;
+}
+
+///
+/// Node Launchpad Tests
+///
+#[tokio::test]
+async fn should_download_and_extract_node_launchpad_for_linux_musl() {
+    download_and_extract(
+        &ReleaseType::NodeLaunchpad,
+        NODE_LAUNCHPAD_VERSION,
+        &Platform::LinuxMusl,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_node_launchpad_for_linux_musl_aarch64() {
+    download_and_extract(
+        &ReleaseType::NodeLaunchpad,
+        NODE_LAUNCHPAD_VERSION,
+        &Platform::LinuxMuslAarch64,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_node_launchpad_for_linux_musl_arm() {
+    download_and_extract(
+        &ReleaseType::NodeLaunchpad,
+        NODE_LAUNCHPAD_VERSION,
+        &Platform::LinuxMuslArm,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_node_launchpad_for_linux_musl_arm_v7() {
+    download_and_extract(
+        &ReleaseType::NodeLaunchpad,
+        NODE_LAUNCHPAD_VERSION,
+        &Platform::LinuxMuslArmV7,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_node_launchpad_for_macos() {
+    download_and_extract(
+        &ReleaseType::NodeLaunchpad,
+        NODE_LAUNCHPAD_VERSION,
+        &Platform::MacOs,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_node_launchpad_for_windows() {
+    download_and_extract(
+        &ReleaseType::NodeLaunchpad,
+        NODE_LAUNCHPAD_VERSION,
         &Platform::Windows,
         &ArchiveType::Zip,
     )
