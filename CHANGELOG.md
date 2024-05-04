@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1](https://github.com/maidsafe/sn-releases/compare/v0.2.0...v0.2.1) - 2024-05-04
+
+### Added
+- add node launchpad to release type
+
 ## [0.2.0](https://github.com/maidsafe/sn-releases/compare/v0.1.9...v0.2.0) - 2024-03-19
 
 ### Other
