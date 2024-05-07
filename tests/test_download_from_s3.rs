@@ -12,7 +12,7 @@ use semver::Version;
 use sn_releases::{ArchiveType, Platform, ReleaseType, SafeReleaseRepoActions};
 
 const FAUCET_VERSION: &str = "0.1.98";
-const NODE_LAUNCHPAD_VERSION: &str = "0.1.0-alpha.0";
+const NODE_LAUNCHPAD_VERSION: &str = "0.1.0";
 const SAFE_VERSION: &str = "0.83.51";
 const SAFENODE_VERSION: &str = "0.93.7";
 const SAFENODE_MANAGER_VERSION: &str = "0.1.8";
