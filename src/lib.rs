@@ -26,7 +26,7 @@ use zip::ZipArchive;
 
 const GITHUB_API_URL: &str = "https://api.github.com";
 const FAUCET_S3_BASE_URL: &str = "https://sn-faucet.s3.eu-west-2.amazonaws.com";
-const NODE_LAUNCHPAD_S3_BASE_URL: &str = "https://sn-node-launchpad.s3.eu-west-2.amazonaws.com";
+const NODE_LAUNCHPAD_S3_BASE_URL: &str = "https://node-launchpad.s3.eu-west-2.amazonaws.com";
 const SAFE_S3_BASE_URL: &str = "https://sn-cli.s3.eu-west-2.amazonaws.com";
 const SAFENODE_S3_BASE_URL: &str = "https://sn-node.s3.eu-west-2.amazonaws.com";
 const SAFENODE_MANAGER_S3_BASE_URL: &str = "https://sn-node-manager.s3.eu-west-2.amazonaws.com";
@@ -66,7 +66,7 @@ lazy_static! {
     static ref RELEASE_TYPE_CRATE_NAME_MAP: HashMap<ReleaseType, &'static str> = {
         let mut m = HashMap::new();
         m.insert(ReleaseType::Faucet, "sn_faucet");
-        m.insert(ReleaseType::NodeLaunchpad, "sn_node_launchpad");
+        m.insert(ReleaseType::NodeLaunchpad, "node-launchpad");
         m.insert(ReleaseType::Safe, "sn_cli");
         m.insert(ReleaseType::Safenode, "sn_node");
         m.insert(ReleaseType::SafenodeManager, "sn-node-manager");
@@ -229,7 +229,7 @@ impl SafeReleaseRepoActions for SafeReleaseRepository {
         // For the time being, the node launchpad needs to be treated as a special case, because it
         // cannot be published.
         if matches!(release_type, ReleaseType::NodeLaunchpad) {
-            return Ok(Version::parse("0.1.0-alpha.0")?);
+            return Ok(Version::parse("0.1.0")?);
         }
 
         let crate_name = *RELEASE_TYPE_CRATE_NAME_MAP.get(release_type).unwrap();
