@@ -3,7 +3,7 @@ name = "sn-releases"
 authors = ["MaidSafe Developers <dev@maidsafe.net>"]
 description = "Download and unpack binaries released from the safe_network repository"
 license = "GPL-3.0"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 repository = "https://github.com/maidsafe/sn-releases"
 
