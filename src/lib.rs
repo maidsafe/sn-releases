@@ -32,6 +32,7 @@ const SAFENODE_S3_BASE_URL: &str = "https://sn-node.s3.eu-west-2.amazonaws.com";
 const SAFENODE_MANAGER_S3_BASE_URL: &str = "https://sn-node-manager.s3.eu-west-2.amazonaws.com";
 const SAFENODE_RPC_CLIENT_S3_BASE_URL: &str =
     "https://sn-node-rpc-client.s3.eu-west-2.amazonaws.com";
+const SN_AUDITOR_S3_BASE_URL: &str = "https://sn-auditor.s3.eu-west-2.amazonaws.com";
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum ReleaseType {
@@ -42,6 +43,7 @@ pub enum ReleaseType {
     SafenodeManager,
     SafenodeManagerDaemon,
     SafenodeRpcClient,
+    SnAuditor,
 }
 
 impl fmt::Display for ReleaseType {
@@ -57,6 +59,7 @@ impl fmt::Display for ReleaseType {
                 ReleaseType::SafenodeManager => "safenode-manager",
                 ReleaseType::SafenodeManagerDaemon => "safenodemand",
                 ReleaseType::SafenodeRpcClient => "safenode_rpc_client",
+                ReleaseType::SnAuditor => "sn_auditor",
             }
         )
     }
@@ -72,6 +75,8 @@ lazy_static! {
         m.insert(ReleaseType::SafenodeManager, "sn-node-manager");
         m.insert(ReleaseType::SafenodeManagerDaemon, "sn-node-manager");
         m.insert(ReleaseType::SafenodeRpcClient, "sn_node_rpc_client");
+        m.insert(ReleaseType::SnAuditor, "sn_auditor");
+
         m
     };
 }
@@ -148,6 +153,7 @@ impl dyn SafeReleaseRepoActions {
             safenode_base_url: SAFENODE_S3_BASE_URL.to_string(),
             safenode_manager_base_url: SAFENODE_MANAGER_S3_BASE_URL.to_string(),
             safenode_rpc_client_base_url: SAFENODE_RPC_CLIENT_S3_BASE_URL.to_string(),
+            sn_auditor_base_url: SN_AUDITOR_S3_BASE_URL.to_string(),
         })
     }
 }
@@ -160,6 +166,7 @@ pub struct SafeReleaseRepository {
     pub safenode_base_url: String,
     pub safenode_manager_base_url: String,
     pub safenode_rpc_client_base_url: String,
+    pub sn_auditor_base_url: String,
 }
 
 impl SafeReleaseRepository {
@@ -172,6 +179,7 @@ impl SafeReleaseRepository {
             ReleaseType::SafenodeManager => self.safenode_manager_base_url.clone(),
             ReleaseType::SafenodeManagerDaemon => self.safenode_manager_base_url.clone(),
             ReleaseType::SafenodeRpcClient => self.safenode_rpc_client_base_url.clone(),
+            ReleaseType::SnAuditor => self.sn_auditor_base_url.clone(),
         }
     }
 

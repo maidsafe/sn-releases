@@ -18,6 +18,7 @@ const SAFENODE_VERSION: &str = "0.93.7";
 const SAFENODE_MANAGER_VERSION: &str = "0.1.8";
 const SAFENODE_MANAGERD_VERSION: &str = "0.4.1";
 const SAFENODE_RPC_CLIENT_VERSION: &str = "0.1.40";
+const SN_AUDITOR_VERSION: &str = "0.1.16";
 
 async fn download_and_extract(
     release_type: &ReleaseType,
@@ -58,6 +59,7 @@ async fn download_and_extract(
         ReleaseType::SafenodeManager => "safenode-manager",
         ReleaseType::SafenodeManagerDaemon => "safenodemand",
         ReleaseType::SafenodeRpcClient => "safenode_rpc_client",
+        ReleaseType::SnAuditor => "sn_auditor",
     };
     let expected_binary_name = if *platform == Platform::Windows {
         format!("{}.exe", binary_name)
@@ -547,6 +549,75 @@ async fn should_download_and_extract_node_launchpad_for_windows() {
     download_and_extract(
         &ReleaseType::NodeLaunchpad,
         NODE_LAUNCHPAD_VERSION,
+        &Platform::Windows,
+        &ArchiveType::Zip,
+    )
+    .await;
+}
+
+///
+/// Sn Auditor Test
+///
+#[tokio::test]
+async fn should_download_and_extract_sn_auditor_for_linux_musl() {
+    download_and_extract(
+        &ReleaseType::SnAuditor,
+        SN_AUDITOR_VERSION,
+        &Platform::LinuxMusl,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_sn_auditor_for_linux_musl_aarch64() {
+    download_and_extract(
+        &ReleaseType::SnAuditor,
+        SN_AUDITOR_VERSION,
+        &Platform::LinuxMuslAarch64,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_sn_auditor_for_linux_musl_arm() {
+    download_and_extract(
+        &ReleaseType::SnAuditor,
+        SN_AUDITOR_VERSION,
+        &Platform::LinuxMuslArm,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_sn_auditor_for_linux_musl_arm_v7() {
+    download_and_extract(
+        &ReleaseType::SnAuditor,
+        SN_AUDITOR_VERSION,
+        &Platform::LinuxMuslArmV7,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_sn_auditor_for_macos() {
+    download_and_extract(
+        &ReleaseType::SnAuditor,
+        SN_AUDITOR_VERSION,
+        &Platform::MacOs,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_sn_auditor_for_windows() {
+    download_and_extract(
+        &ReleaseType::SnAuditor,
+        SN_AUDITOR_VERSION,
         &Platform::Windows,
         &ArchiveType::Zip,
     )
