@@ -12,6 +12,7 @@ use semver::Version;
 use sn_releases::{ArchiveType, Platform, ReleaseType, SafeReleaseRepoActions};
 
 const FAUCET_VERSION: &str = "0.1.98";
+const NAT_DETECTION_VERSION: &str = "0.1.0";
 const NODE_LAUNCHPAD_VERSION: &str = "0.1.0";
 const SAFE_VERSION: &str = "0.83.51";
 const SAFENODE_VERSION: &str = "0.93.7";
@@ -53,6 +54,7 @@ async fn download_and_extract(
 
     let binary_name = match release_type {
         ReleaseType::Faucet => "faucet",
+        ReleaseType::NatDetection => "nat-detection",
         ReleaseType::NodeLaunchpad => "node-launchpad",
         ReleaseType::Safe => "safe",
         ReleaseType::Safenode => "safenode",
@@ -618,6 +620,75 @@ async fn should_download_and_extract_sn_auditor_for_windows() {
     download_and_extract(
         &ReleaseType::SnAuditor,
         SN_AUDITOR_VERSION,
+        &Platform::Windows,
+        &ArchiveType::Zip,
+    )
+    .await;
+}
+
+///
+/// NAT Detection Test
+///
+#[tokio::test]
+async fn should_download_and_extract_nat_detection_for_linux_musl() {
+    download_and_extract(
+        &ReleaseType::NatDetection,
+        NAT_DETECTION_VERSION,
+        &Platform::LinuxMusl,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_nat_detection_for_linux_musl_aarch64() {
+    download_and_extract(
+        &ReleaseType::NatDetection,
+        NAT_DETECTION_VERSION,
+        &Platform::LinuxMuslAarch64,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_nat_detection_for_linux_musl_arm() {
+    download_and_extract(
+        &ReleaseType::NatDetection,
+        NAT_DETECTION_VERSION,
+        &Platform::LinuxMuslArm,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_nat_detection_for_linux_musl_arm_v7() {
+    download_and_extract(
+        &ReleaseType::NatDetection,
+        NAT_DETECTION_VERSION,
+        &Platform::LinuxMuslArmV7,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_nat_detection_for_macos() {
+    download_and_extract(
+        &ReleaseType::NatDetection,
+        NAT_DETECTION_VERSION,
+        &Platform::MacOs,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_nat_detection_for_windows() {
+    download_and_extract(
+        &ReleaseType::NatDetection,
+        NAT_DETECTION_VERSION,
         &Platform::Windows,
         &ArchiveType::Zip,
     )
