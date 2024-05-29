@@ -11,6 +11,23 @@ use sn_releases::error::Error;
 use sn_releases::SafeReleaseRepoActions;
 
 #[tokio::test]
+async fn should_download_winsw() {
+    let dest_dir = assert_fs::TempDir::new().unwrap();
+    let download_dir = dest_dir.child("download_to");
+    download_dir.create_dir_all().unwrap();
+    let downloaded_archive = download_dir.child("WinSW-x64.exe");
+
+    let progress_callback = |_downloaded: u64, _total: u64| {};
+    let release_repo = <dyn SafeReleaseRepoActions>::default_config();
+    release_repo
+        .download_winsw(&downloaded_archive, &progress_callback)
+        .await
+        .unwrap();
+
+    downloaded_archive.assert(predicates::path::is_file());
+}
+
+#[tokio::test]
 async fn should_download_a_custom_binary() {
     let dest_dir = assert_fs::TempDir::new().unwrap();
     let download_dir = dest_dir.child("download_to");
