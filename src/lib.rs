@@ -34,6 +34,7 @@ const SAFENODE_MANAGER_S3_BASE_URL: &str = "https://sn-node-manager.s3.eu-west-2
 const SAFENODE_RPC_CLIENT_S3_BASE_URL: &str =
     "https://sn-node-rpc-client.s3.eu-west-2.amazonaws.com";
 const SN_AUDITOR_S3_BASE_URL: &str = "https://sn-auditor.s3.eu-west-2.amazonaws.com";
+const WINSW_URL: &str = "https://sn-node-manager.s3.eu-west-2.amazonaws.com/WinSW-x64.exe";
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum ReleaseType {
@@ -143,6 +144,7 @@ pub trait SafeReleaseRepoActions {
         dest_dir_path: &Path,
         callback: &ProgressCallback,
     ) -> Result<PathBuf>;
+    async fn download_winsw(&self, dest_path: &Path, callback: &ProgressCallback) -> Result<()>;
     fn extract_release_archive(&self, archive_path: &Path, dest_dir_path: &Path)
         -> Result<PathBuf>;
 }
@@ -193,7 +195,7 @@ impl SafeReleaseRepository {
     async fn download_url(
         &self,
         url: &str,
-        dest_path: &PathBuf,
+        dest_path: &Path,
         callback: &ProgressCallback,
     ) -> Result<()> {
         let client = Client::new();
@@ -337,6 +339,11 @@ impl SafeReleaseRepoActions for SafeReleaseRepository {
         self.download_url(url, &dest_path, callback).await?;
 
         Ok(dest_path)
+    }
+
+    async fn download_winsw(&self, dest_path: &Path, callback: &ProgressCallback) -> Result<()> {
+        self.download_url(WINSW_URL, dest_path, callback).await?;
+        Ok(())
     }
 
     /// Extracts a release binary archive.
