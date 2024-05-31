@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.6](https://github.com/maidsafe/sn-releases/compare/v0.2.5...v0.2.6) - 2024-05-31
+
+### Added
+- provide `download_winsw` on release repository
+
 ## [0.2.5](https://github.com/maidsafe/sn-releases/compare/v0.2.4...v0.2.5) - 2024-05-23
 
 ### Added
