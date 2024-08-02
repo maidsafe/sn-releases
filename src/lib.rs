@@ -93,6 +93,7 @@ pub enum Platform {
     LinuxMuslArm,
     LinuxMuslArmV7,
     MacOs,
+    MacOsAarch64,
     Windows,
 }
 
@@ -104,6 +105,7 @@ impl fmt::Display for Platform {
             Platform::LinuxMuslArm => write!(f, "arm-unknown-linux-musleabi"),
             Platform::LinuxMuslArmV7 => write!(f, "armv7-unknown-linux-musleabihf"),
             Platform::MacOs => write!(f, "x86_64-apple-darwin"),
+            Platform::MacOsAarch64 => write!(f, "aarch64-apple-darwin"),
             Platform::Windows => write!(f, "x86_64-pc-windows-msvc"), // This appears to be the same as the above, so I'm using the same string.
         }
     }
@@ -427,7 +429,13 @@ pub fn get_running_platform() -> Result<Platform> {
             }
             Ok(Platform::Windows)
         }
-        "macos" => Ok(Platform::MacOs),
+        "macos" => match ARCH {
+            "x86_64" => Ok(Platform::MacOs),
+            "aarch64" => Ok(Platform::MacOsAarch64),
+            &_ => Err(Error::PlatformNotSupported(format!(
+                "We currently do not have binaries for the {OS}/{ARCH} combination"
+            ))),
+        },
         &_ => Err(Error::PlatformNotSupported(format!(
             "{OS} is not currently supported"
         ))),
