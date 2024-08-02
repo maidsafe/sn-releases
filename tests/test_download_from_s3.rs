@@ -14,7 +14,7 @@ use sn_releases::{ArchiveType, Platform, ReleaseType, SafeReleaseRepoActions};
 const FAUCET_VERSION: &str = "0.1.98";
 const NAT_DETECTION_VERSION: &str = "0.1.0";
 const NODE_LAUNCHPAD_VERSION: &str = "0.1.0";
-const SAFE_VERSION: &str = "0.83.51";
+const SAFE_VERSION: &str = "0.94.0";
 const SAFENODE_VERSION: &str = "0.93.7";
 const SAFENODE_MANAGER_VERSION: &str = "0.1.8";
 const SAFENODE_MANAGERD_VERSION: &str = "0.4.1";
@@ -127,6 +127,17 @@ async fn should_download_and_extract_safe_for_macos() {
         &ReleaseType::Safe,
         SAFE_VERSION,
         &Platform::MacOs,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_safe_for_macos_aarch64() {
+    download_and_extract(
+        &ReleaseType::Safe,
+        SAFE_VERSION,
+        &Platform::MacOsAarch64,
         &ArchiveType::TarGz,
     )
     .await;
