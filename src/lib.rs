@@ -73,7 +73,7 @@ lazy_static! {
     static ref RELEASE_TYPE_CRATE_NAME_MAP: HashMap<ReleaseType, &'static str> = {
         let mut m = HashMap::new();
         m.insert(ReleaseType::Faucet, "sn_faucet");
-        m.insert(ReleaseType::NatDetection, "sn_nat_detection");
+        m.insert(ReleaseType::NatDetection, "nat-detection");
         m.insert(ReleaseType::NodeLaunchpad, "node-launchpad");
         m.insert(ReleaseType::Safe, "sn_cli");
         m.insert(ReleaseType::Safenode, "sn_node");
