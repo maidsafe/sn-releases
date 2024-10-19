@@ -24,24 +24,24 @@ use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use zip::ZipArchive;
 
-const GITHUB_API_URL: &str = "https://api.github.com";
+const AUTONOMI_S3_BASE_URL: &str = "https://autonomi-cli.s3.eu-west-2.amazonaws.com";
 const FAUCET_S3_BASE_URL: &str = "https://sn-faucet.s3.eu-west-2.amazonaws.com";
+const GITHUB_API_URL: &str = "https://api.github.com";
 const NAT_DETECTION_S3_BASE_URL: &str = "https://nat-detection.s3.eu-west-2.amazonaws.com";
 const NODE_LAUNCHPAD_S3_BASE_URL: &str = "https://node-launchpad.s3.eu-west-2.amazonaws.com";
-const SAFE_S3_BASE_URL: &str = "https://sn-cli.s3.eu-west-2.amazonaws.com";
-const SAFENODE_S3_BASE_URL: &str = "https://sn-node.s3.eu-west-2.amazonaws.com";
 const SAFENODE_MANAGER_S3_BASE_URL: &str = "https://sn-node-manager.s3.eu-west-2.amazonaws.com";
 const SAFENODE_RPC_CLIENT_S3_BASE_URL: &str =
     "https://sn-node-rpc-client.s3.eu-west-2.amazonaws.com";
+const SAFENODE_S3_BASE_URL: &str = "https://sn-node.s3.eu-west-2.amazonaws.com";
 const SN_AUDITOR_S3_BASE_URL: &str = "https://sn-auditor.s3.eu-west-2.amazonaws.com";
 const WINSW_URL: &str = "https://sn-node-manager.s3.eu-west-2.amazonaws.com/WinSW-x64.exe";
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum ReleaseType {
+    Autonomi,
     Faucet,
     NatDetection,
     NodeLaunchpad,
-    Safe,
     Safenode,
     SafenodeManager,
     SafenodeManagerDaemon,
@@ -55,10 +55,10 @@ impl fmt::Display for ReleaseType {
             f,
             "{}",
             match self {
+                ReleaseType::Autonomi => "autonomi",
                 ReleaseType::Faucet => "faucet",
                 ReleaseType::NatDetection => "nat-detection",
                 ReleaseType::NodeLaunchpad => "node-launchpad",
-                ReleaseType::Safe => "safe",
                 ReleaseType::Safenode => "safenode",
                 ReleaseType::SafenodeManager => "safenode-manager",
                 ReleaseType::SafenodeManagerDaemon => "safenodemand",
@@ -72,10 +72,10 @@ impl fmt::Display for ReleaseType {
 lazy_static! {
     static ref RELEASE_TYPE_CRATE_NAME_MAP: HashMap<ReleaseType, &'static str> = {
         let mut m = HashMap::new();
+        m.insert(ReleaseType::Autonomi, "autonomi");
         m.insert(ReleaseType::Faucet, "sn_faucet");
         m.insert(ReleaseType::NatDetection, "nat-detection");
         m.insert(ReleaseType::NodeLaunchpad, "node-launchpad");
-        m.insert(ReleaseType::Safe, "sn_cli");
         m.insert(ReleaseType::Safenode, "sn_node");
         m.insert(ReleaseType::SafenodeManager, "sn-node-manager");
         m.insert(ReleaseType::SafenodeManagerDaemon, "sn-node-manager");
@@ -158,7 +158,7 @@ impl dyn SafeReleaseRepoActions {
             nat_detection_base_url: NAT_DETECTION_S3_BASE_URL.to_string(),
             faucet_base_url: FAUCET_S3_BASE_URL.to_string(),
             node_launchpad_base_url: NODE_LAUNCHPAD_S3_BASE_URL.to_string(),
-            safe_base_url: SAFE_S3_BASE_URL.to_string(),
+            autonomi_base_url: AUTONOMI_S3_BASE_URL.to_string(),
             safenode_base_url: SAFENODE_S3_BASE_URL.to_string(),
             safenode_manager_base_url: SAFENODE_MANAGER_S3_BASE_URL.to_string(),
             safenode_rpc_client_base_url: SAFENODE_RPC_CLIENT_S3_BASE_URL.to_string(),
@@ -172,7 +172,7 @@ pub struct SafeReleaseRepository {
     pub faucet_base_url: String,
     pub nat_detection_base_url: String,
     pub node_launchpad_base_url: String,
-    pub safe_base_url: String,
+    pub autonomi_base_url: String,
     pub safenode_base_url: String,
     pub safenode_manager_base_url: String,
     pub safenode_rpc_client_base_url: String,
@@ -185,7 +185,7 @@ impl SafeReleaseRepository {
             ReleaseType::Faucet => self.faucet_base_url.clone(),
             ReleaseType::NatDetection => self.nat_detection_base_url.clone(),
             ReleaseType::NodeLaunchpad => self.node_launchpad_base_url.clone(),
-            ReleaseType::Safe => self.safe_base_url.clone(),
+            ReleaseType::Autonomi => self.autonomi_base_url.clone(),
             ReleaseType::Safenode => self.safenode_base_url.clone(),
             ReleaseType::SafenodeManager => self.safenode_manager_base_url.clone(),
             ReleaseType::SafenodeManagerDaemon => self.safenode_manager_base_url.clone(),
