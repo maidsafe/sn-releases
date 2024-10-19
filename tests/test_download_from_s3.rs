@@ -14,7 +14,7 @@ use sn_releases::{ArchiveType, Platform, ReleaseType, SafeReleaseRepoActions};
 const FAUCET_VERSION: &str = "0.1.98";
 const NAT_DETECTION_VERSION: &str = "0.1.0";
 const NODE_LAUNCHPAD_VERSION: &str = "0.1.0";
-const SAFE_VERSION: &str = "0.94.0";
+const AUTONOMI_VERSION: &str = "1.0.0";
 const SAFENODE_VERSION: &str = "0.93.7";
 const SAFENODE_MANAGER_VERSION: &str = "0.1.8";
 const SAFENODE_MANAGERD_VERSION: &str = "0.4.1";
@@ -56,7 +56,7 @@ async fn download_and_extract(
         ReleaseType::Faucet => "faucet",
         ReleaseType::NatDetection => "nat-detection",
         ReleaseType::NodeLaunchpad => "node-launchpad",
-        ReleaseType::Safe => "safe",
+        ReleaseType::Autonomi => "autonomi",
         ReleaseType::Safenode => "safenode",
         ReleaseType::SafenodeManager => "safenode-manager",
         ReleaseType::SafenodeManagerDaemon => "safenodemand",
@@ -75,13 +75,13 @@ async fn download_and_extract(
 }
 
 ///
-/// Safe Tests
+/// Autonomi Tests
 ///
 #[tokio::test]
-async fn should_download_and_extract_safe_for_linux_musl() {
+async fn should_download_and_extract_autonomi_for_linux_musl() {
     download_and_extract(
-        &ReleaseType::Safe,
-        SAFE_VERSION,
+        &ReleaseType::Autonomi,
+        AUTONOMI_VERSION,
         &Platform::LinuxMusl,
         &ArchiveType::TarGz,
     )
@@ -89,10 +89,10 @@ async fn should_download_and_extract_safe_for_linux_musl() {
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safe_for_linux_musl_aarch64() {
+async fn should_download_and_extract_autonomi_for_linux_musl_aarch64() {
     download_and_extract(
-        &ReleaseType::Safe,
-        SAFE_VERSION,
+        &ReleaseType::Autonomi,
+        AUTONOMI_VERSION,
         &Platform::LinuxMuslAarch64,
         &ArchiveType::TarGz,
     )
@@ -100,10 +100,10 @@ async fn should_download_and_extract_safe_for_linux_musl_aarch64() {
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safe_for_linux_musl_arm() {
+async fn should_download_and_extract_autonomi_for_linux_musl_arm() {
     download_and_extract(
-        &ReleaseType::Safe,
-        SAFE_VERSION,
+        &ReleaseType::Autonomi,
+        AUTONOMI_VERSION,
         &Platform::LinuxMuslArm,
         &ArchiveType::TarGz,
     )
@@ -111,10 +111,10 @@ async fn should_download_and_extract_safe_for_linux_musl_arm() {
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safe_for_linux_musl_arm_v7() {
+async fn should_download_and_extract_autonomi_for_linux_musl_arm_v7() {
     download_and_extract(
-        &ReleaseType::Safe,
-        SAFE_VERSION,
+        &ReleaseType::Autonomi,
+        AUTONOMI_VERSION,
         &Platform::LinuxMuslArmV7,
         &ArchiveType::TarGz,
     )
@@ -122,10 +122,10 @@ async fn should_download_and_extract_safe_for_linux_musl_arm_v7() {
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safe_for_macos() {
+async fn should_download_and_extract_autonomi_for_macos() {
     download_and_extract(
-        &ReleaseType::Safe,
-        SAFE_VERSION,
+        &ReleaseType::Autonomi,
+        AUTONOMI_VERSION,
         &Platform::MacOs,
         &ArchiveType::TarGz,
     )
@@ -133,10 +133,10 @@ async fn should_download_and_extract_safe_for_macos() {
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safe_for_macos_aarch64() {
+async fn should_download_and_extract_autonomi_for_macos_aarch64() {
     download_and_extract(
-        &ReleaseType::Safe,
-        SAFE_VERSION,
+        &ReleaseType::Autonomi,
+        AUTONOMI_VERSION,
         &Platform::MacOsAarch64,
         &ArchiveType::TarGz,
     )
@@ -144,10 +144,10 @@ async fn should_download_and_extract_safe_for_macos_aarch64() {
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safe_for_windows() {
+async fn should_download_and_extract_autonomi_for_windows() {
     download_and_extract(
-        &ReleaseType::Safe,
-        SAFE_VERSION,
+        &ReleaseType::Autonomi,
+        AUTONOMI_VERSION,
         &Platform::Windows,
         &ArchiveType::Zip,
     )
