@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0](https://github.com/maidsafe/sn-releases/compare/v0.2.8...v0.3.0) - 2024-10-20
+
+### Added
+- replace safe release type with autonomi
+
+### Other
+- remove faucet and auditor release types
+
 ## [0.2.8](https://github.com/maidsafe/sn-releases/compare/v0.2.7...v0.2.8) - 2024-08-28
 
 ### Fixed
