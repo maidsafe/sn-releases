@@ -66,7 +66,7 @@ impl fmt::Display for ReleaseType {
 lazy_static! {
     static ref RELEASE_TYPE_CRATE_NAME_MAP: HashMap<ReleaseType, &'static str> = {
         let mut m = HashMap::new();
-        m.insert(ReleaseType::Autonomi, "autonomi");
+        m.insert(ReleaseType::Autonomi, "autonomi-cli");
         m.insert(ReleaseType::NatDetection, "nat-detection");
         m.insert(ReleaseType::NodeLaunchpad, "node-launchpad");
         m.insert(ReleaseType::Safenode, "sn_node");
