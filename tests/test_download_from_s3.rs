@@ -13,7 +13,7 @@ use sn_releases::{ArchiveType, Platform, ReleaseType, SafeReleaseRepoActions};
 
 const NAT_DETECTION_VERSION: &str = "0.1.0";
 const NODE_LAUNCHPAD_VERSION: &str = "0.1.0";
-const AUTONOMI_VERSION: &str = "1.0.0";
+const AUTONOMI_VERSION: &str = "0.1.1";
 const SAFENODE_VERSION: &str = "0.93.7";
 const SAFENODE_MANAGER_VERSION: &str = "0.1.8";
 const SAFENODE_MANAGERD_VERSION: &str = "0.4.1";
