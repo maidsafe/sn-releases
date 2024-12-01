@@ -6,18 +6,18 @@
 // KIND, either express or implied. Please review the Licences for the specific language governing
 // permissions and limitations relating to use of the SAFE Network Software.
 
+use ant_releases::{AntReleaseRepoActions, ArchiveType, Platform, ReleaseType};
 use assert_fs::prelude::*;
 use predicates::prelude::*;
 use semver::Version;
-use sn_releases::{ArchiveType, Platform, ReleaseType, SafeReleaseRepoActions};
 
-const NAT_DETECTION_VERSION: &str = "0.1.0";
-const NODE_LAUNCHPAD_VERSION: &str = "0.1.0";
-const AUTONOMI_VERSION: &str = "0.1.1";
-const SAFENODE_VERSION: &str = "0.93.7";
-const SAFENODE_MANAGER_VERSION: &str = "0.1.8";
-const SAFENODE_MANAGERD_VERSION: &str = "0.4.1";
-const SAFENODE_RPC_CLIENT_VERSION: &str = "0.1.40";
+const ANT_VERSION: &str = "0.1.6-rc.1";
+const ANTCTL_VERSION: &str = "0.11.4-rc.1";
+const ANTCTLD_VERSION: &str = "0.11.4-rc.1";
+const ANTNODE_VERSION: &str = "0.112.7-rc.1";
+const ANTNODE_RPC_CLIENT_VERSION: &str = "0.6.37-rc.1";
+const NAT_DETECTION_VERSION: &str = "0.2.12-rc.1";
+const NODE_LAUNCHPAD_VERSION: &str = "0.4.6-rc.1";
 
 async fn download_and_extract(
     release_type: &ReleaseType,
@@ -33,7 +33,7 @@ async fn download_and_extract(
 
     let progress_callback = |_downloaded: u64, _total: u64| {};
 
-    let release_repo = <dyn SafeReleaseRepoActions>::default_config();
+    let release_repo = <dyn AntReleaseRepoActions>::default_config();
     let archive_path = release_repo
         .download_release_from_s3(
             release_type,
@@ -51,13 +51,13 @@ async fn download_and_extract(
         .unwrap();
 
     let binary_name = match release_type {
-        ReleaseType::Autonomi => "autonomi",
+        ReleaseType::Ant => "ant",
+        ReleaseType::AntCtl => "antctl",
+        ReleaseType::AntCtlDaemon => "antctld",
+        ReleaseType::AntNode => "antnode",
+        ReleaseType::AntNodeRpcClient => "antnode_rpc_client",
         ReleaseType::NatDetection => "nat-detection",
         ReleaseType::NodeLaunchpad => "node-launchpad",
-        ReleaseType::Safenode => "safenode",
-        ReleaseType::SafenodeManager => "safenode-manager",
-        ReleaseType::SafenodeManagerDaemon => "safenodemand",
-        ReleaseType::SafenodeRpcClient => "safenode_rpc_client",
     };
     let expected_binary_name = if *platform == Platform::Windows {
         format!("{}.exe", binary_name)
@@ -71,13 +71,13 @@ async fn download_and_extract(
 }
 
 ///
-/// Autonomi Tests
+/// Ant Tests
 ///
 #[tokio::test]
 async fn should_download_and_extract_autonomi_for_linux_musl() {
     download_and_extract(
-        &ReleaseType::Autonomi,
-        AUTONOMI_VERSION,
+        &ReleaseType::Ant,
+        ANT_VERSION,
         &Platform::LinuxMusl,
         &ArchiveType::TarGz,
     )
@@ -87,8 +87,8 @@ async fn should_download_and_extract_autonomi_for_linux_musl() {
 #[tokio::test]
 async fn should_download_and_extract_autonomi_for_linux_musl_aarch64() {
     download_and_extract(
-        &ReleaseType::Autonomi,
-        AUTONOMI_VERSION,
+        &ReleaseType::Ant,
+        ANT_VERSION,
         &Platform::LinuxMuslAarch64,
         &ArchiveType::TarGz,
     )
@@ -98,8 +98,8 @@ async fn should_download_and_extract_autonomi_for_linux_musl_aarch64() {
 #[tokio::test]
 async fn should_download_and_extract_autonomi_for_linux_musl_arm() {
     download_and_extract(
-        &ReleaseType::Autonomi,
-        AUTONOMI_VERSION,
+        &ReleaseType::Ant,
+        ANT_VERSION,
         &Platform::LinuxMuslArm,
         &ArchiveType::TarGz,
     )
@@ -109,8 +109,8 @@ async fn should_download_and_extract_autonomi_for_linux_musl_arm() {
 #[tokio::test]
 async fn should_download_and_extract_autonomi_for_linux_musl_arm_v7() {
     download_and_extract(
-        &ReleaseType::Autonomi,
-        AUTONOMI_VERSION,
+        &ReleaseType::Ant,
+        ANT_VERSION,
         &Platform::LinuxMuslArmV7,
         &ArchiveType::TarGz,
     )
@@ -120,8 +120,8 @@ async fn should_download_and_extract_autonomi_for_linux_musl_arm_v7() {
 #[tokio::test]
 async fn should_download_and_extract_autonomi_for_macos() {
     download_and_extract(
-        &ReleaseType::Autonomi,
-        AUTONOMI_VERSION,
+        &ReleaseType::Ant,
+        ANT_VERSION,
         &Platform::MacOs,
         &ArchiveType::TarGz,
     )
@@ -131,8 +131,8 @@ async fn should_download_and_extract_autonomi_for_macos() {
 #[tokio::test]
 async fn should_download_and_extract_autonomi_for_macos_aarch64() {
     download_and_extract(
-        &ReleaseType::Autonomi,
-        AUTONOMI_VERSION,
+        &ReleaseType::Ant,
+        ANT_VERSION,
         &Platform::MacOsAarch64,
         &ArchiveType::TarGz,
     )
@@ -142,8 +142,8 @@ async fn should_download_and_extract_autonomi_for_macos_aarch64() {
 #[tokio::test]
 async fn should_download_and_extract_autonomi_for_windows() {
     download_and_extract(
-        &ReleaseType::Autonomi,
-        AUTONOMI_VERSION,
+        &ReleaseType::Ant,
+        ANT_VERSION,
         &Platform::Windows,
         &ArchiveType::Zip,
     )
@@ -151,13 +151,13 @@ async fn should_download_and_extract_autonomi_for_windows() {
 }
 
 ///
-/// Safenode Tests
+/// Antnode Tests
 ///
 #[tokio::test]
-async fn should_download_and_extract_safenode_for_linux_musl() {
+async fn should_download_and_extract_antnode_for_linux_musl() {
     download_and_extract(
-        &ReleaseType::Safenode,
-        SAFENODE_VERSION,
+        &ReleaseType::AntNode,
+        ANTNODE_VERSION,
         &Platform::LinuxMusl,
         &ArchiveType::TarGz,
     )
@@ -165,10 +165,10 @@ async fn should_download_and_extract_safenode_for_linux_musl() {
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safenode_for_linux_musl_aarch64() {
+async fn should_download_and_extract_antnode_for_linux_musl_aarch64() {
     download_and_extract(
-        &ReleaseType::Safenode,
-        SAFENODE_VERSION,
+        &ReleaseType::AntNode,
+        ANTNODE_VERSION,
         &Platform::LinuxMuslAarch64,
         &ArchiveType::TarGz,
     )
@@ -176,10 +176,10 @@ async fn should_download_and_extract_safenode_for_linux_musl_aarch64() {
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safenode_for_linux_musl_arm() {
+async fn should_download_and_extract_antnode_for_linux_musl_arm() {
     download_and_extract(
-        &ReleaseType::Safenode,
-        SAFENODE_VERSION,
+        &ReleaseType::AntNode,
+        ANTNODE_VERSION,
         &Platform::LinuxMuslArm,
         &ArchiveType::TarGz,
     )
@@ -187,10 +187,10 @@ async fn should_download_and_extract_safenode_for_linux_musl_arm() {
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safenode_for_linux_musl_arm_v7() {
+async fn should_download_and_extract_antnode_for_linux_musl_arm_v7() {
     download_and_extract(
-        &ReleaseType::Safenode,
-        SAFENODE_VERSION,
+        &ReleaseType::AntNode,
+        ANTNODE_VERSION,
         &Platform::LinuxMuslArmV7,
         &ArchiveType::TarGz,
     )
@@ -198,10 +198,10 @@ async fn should_download_and_extract_safenode_for_linux_musl_arm_v7() {
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safenode_for_macos() {
+async fn should_download_and_extract_antnode_for_macos() {
     download_and_extract(
-        &ReleaseType::Safenode,
-        SAFENODE_VERSION,
+        &ReleaseType::AntNode,
+        ANTNODE_VERSION,
         &Platform::MacOs,
         &ArchiveType::TarGz,
     )
@@ -209,10 +209,10 @@ async fn should_download_and_extract_safenode_for_macos() {
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safenode_for_windows() {
+async fn should_download_and_extract_antnode_for_windows() {
     download_and_extract(
-        &ReleaseType::Safenode,
-        SAFENODE_VERSION,
+        &ReleaseType::AntNode,
+        ANTNODE_VERSION,
         &Platform::Windows,
         &ArchiveType::Zip,
     )
@@ -220,13 +220,13 @@ async fn should_download_and_extract_safenode_for_windows() {
 }
 
 ///
-/// Safenode RPC client tests
+/// Antctl Tests
 ///
 #[tokio::test]
-async fn should_download_and_extract_safenode_rpc_client_for_linux_musl() {
+async fn should_download_and_extract_antctl_for_linux_musl() {
     download_and_extract(
-        &ReleaseType::SafenodeRpcClient,
-        SAFENODE_RPC_CLIENT_VERSION,
+        &ReleaseType::AntCtl,
+        ANTCTL_VERSION,
         &Platform::LinuxMusl,
         &ArchiveType::TarGz,
     )
@@ -234,10 +234,10 @@ async fn should_download_and_extract_safenode_rpc_client_for_linux_musl() {
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safenode_rpc_client_for_linux_musl_aarch64() {
+async fn should_download_and_extract_antctl_for_linux_musl_aarch64() {
     download_and_extract(
-        &ReleaseType::SafenodeRpcClient,
-        SAFENODE_RPC_CLIENT_VERSION,
+        &ReleaseType::AntCtl,
+        ANTCTL_VERSION,
         &Platform::LinuxMuslAarch64,
         &ArchiveType::TarGz,
     )
@@ -245,10 +245,10 @@ async fn should_download_and_extract_safenode_rpc_client_for_linux_musl_aarch64(
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safenode_rpc_client_for_linux_musl_arm() {
+async fn should_download_and_extract_antctl_for_linux_musl_arm() {
     download_and_extract(
-        &ReleaseType::SafenodeRpcClient,
-        SAFENODE_RPC_CLIENT_VERSION,
+        &ReleaseType::AntCtl,
+        ANTCTL_VERSION,
         &Platform::LinuxMuslArm,
         &ArchiveType::TarGz,
     )
@@ -256,10 +256,10 @@ async fn should_download_and_extract_safenode_rpc_client_for_linux_musl_arm() {
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safenode_rpc_client_for_linux_musl_arm_v7() {
+async fn should_download_and_extract_antctl_for_linux_musl_arm_v7() {
     download_and_extract(
-        &ReleaseType::SafenodeRpcClient,
-        SAFENODE_RPC_CLIENT_VERSION,
+        &ReleaseType::AntCtl,
+        ANTCTL_VERSION,
         &Platform::LinuxMuslArmV7,
         &ArchiveType::TarGz,
     )
@@ -267,10 +267,10 @@ async fn should_download_and_extract_safenode_rpc_client_for_linux_musl_arm_v7()
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safenode_rpc_client_for_macos() {
+async fn should_download_and_extract_antctl_for_macos() {
     download_and_extract(
-        &ReleaseType::SafenodeRpcClient,
-        SAFENODE_RPC_CLIENT_VERSION,
+        &ReleaseType::AntCtl,
+        ANTCTL_VERSION,
         &Platform::MacOs,
         &ArchiveType::TarGz,
     )
@@ -278,10 +278,10 @@ async fn should_download_and_extract_safenode_rpc_client_for_macos() {
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safenode_rpc_client_for_windows() {
+async fn should_download_and_extract_antctl_for_windows() {
     download_and_extract(
-        &ReleaseType::SafenodeRpcClient,
-        SAFENODE_RPC_CLIENT_VERSION,
+        &ReleaseType::AntCtl,
+        ANTCTL_VERSION,
         &Platform::Windows,
         &ArchiveType::Zip,
     )
@@ -289,13 +289,13 @@ async fn should_download_and_extract_safenode_rpc_client_for_windows() {
 }
 
 ///
-/// Node Manager Tests
+/// Antctld Tests
 ///
 #[tokio::test]
-async fn should_download_and_extract_safenode_manager_for_linux_musl() {
+async fn should_download_and_extract_antctld_for_linux_musl() {
     download_and_extract(
-        &ReleaseType::SafenodeManager,
-        SAFENODE_MANAGER_VERSION,
+        &ReleaseType::AntCtlDaemon,
+        ANTCTLD_VERSION,
         &Platform::LinuxMusl,
         &ArchiveType::TarGz,
     )
@@ -303,10 +303,10 @@ async fn should_download_and_extract_safenode_manager_for_linux_musl() {
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safenode_manager_for_linux_musl_aarch64() {
+async fn should_download_and_extract_antctld_for_linux_musl_aarch64() {
     download_and_extract(
-        &ReleaseType::SafenodeManager,
-        SAFENODE_MANAGER_VERSION,
+        &ReleaseType::AntCtlDaemon,
+        ANTCTLD_VERSION,
         &Platform::LinuxMuslAarch64,
         &ArchiveType::TarGz,
     )
@@ -314,10 +314,10 @@ async fn should_download_and_extract_safenode_manager_for_linux_musl_aarch64() {
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safenode_manager_for_linux_musl_arm() {
+async fn should_download_and_extract_antctld_for_linux_musl_arm() {
     download_and_extract(
-        &ReleaseType::SafenodeManager,
-        SAFENODE_MANAGER_VERSION,
+        &ReleaseType::AntCtlDaemon,
+        ANTCTLD_VERSION,
         &Platform::LinuxMuslArm,
         &ArchiveType::TarGz,
     )
@@ -325,10 +325,10 @@ async fn should_download_and_extract_safenode_manager_for_linux_musl_arm() {
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safenode_manager_for_linux_musl_arm_v7() {
+async fn should_download_and_extract_antctld_for_linux_musl_arm_v7() {
     download_and_extract(
-        &ReleaseType::SafenodeManager,
-        SAFENODE_MANAGER_VERSION,
+        &ReleaseType::AntCtlDaemon,
+        ANTCTLD_VERSION,
         &Platform::LinuxMuslArmV7,
         &ArchiveType::TarGz,
     )
@@ -336,10 +336,10 @@ async fn should_download_and_extract_safenode_manager_for_linux_musl_arm_v7() {
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safenode_manager_for_macos() {
+async fn should_download_and_extract_antctld_for_macos() {
     download_and_extract(
-        &ReleaseType::SafenodeManager,
-        SAFENODE_MANAGER_VERSION,
+        &ReleaseType::AntCtlDaemon,
+        ANTCTLD_VERSION,
         &Platform::MacOs,
         &ArchiveType::TarGz,
     )
@@ -347,79 +347,10 @@ async fn should_download_and_extract_safenode_manager_for_macos() {
 }
 
 #[tokio::test]
-async fn should_download_and_extract_safenode_manager_for_windows() {
+async fn should_download_and_extract_antctld_for_windows() {
     download_and_extract(
-        &ReleaseType::SafenodeManager,
-        SAFENODE_MANAGER_VERSION,
-        &Platform::Windows,
-        &ArchiveType::Zip,
-    )
-    .await;
-}
-
-///
-/// Node Manager Daemon Tests
-///
-#[tokio::test]
-async fn should_download_and_extract_safenodemand_for_linux_musl() {
-    download_and_extract(
-        &ReleaseType::SafenodeManagerDaemon,
-        SAFENODE_MANAGERD_VERSION,
-        &Platform::LinuxMusl,
-        &ArchiveType::TarGz,
-    )
-    .await;
-}
-
-#[tokio::test]
-async fn should_download_and_extract_safenodemand_for_linux_musl_aarch64() {
-    download_and_extract(
-        &ReleaseType::SafenodeManagerDaemon,
-        SAFENODE_MANAGERD_VERSION,
-        &Platform::LinuxMuslAarch64,
-        &ArchiveType::TarGz,
-    )
-    .await;
-}
-
-#[tokio::test]
-async fn should_download_and_extract_safenodemand_for_linux_musl_arm() {
-    download_and_extract(
-        &ReleaseType::SafenodeManagerDaemon,
-        SAFENODE_MANAGERD_VERSION,
-        &Platform::LinuxMuslArm,
-        &ArchiveType::TarGz,
-    )
-    .await;
-}
-
-#[tokio::test]
-async fn should_download_and_extract_safenodemand_for_linux_musl_arm_v7() {
-    download_and_extract(
-        &ReleaseType::SafenodeManagerDaemon,
-        SAFENODE_MANAGERD_VERSION,
-        &Platform::LinuxMuslArmV7,
-        &ArchiveType::TarGz,
-    )
-    .await;
-}
-
-#[tokio::test]
-async fn should_download_and_extract_safenodemand_for_macos() {
-    download_and_extract(
-        &ReleaseType::SafenodeManagerDaemon,
-        SAFENODE_MANAGERD_VERSION,
-        &Platform::MacOs,
-        &ArchiveType::TarGz,
-    )
-    .await;
-}
-
-#[tokio::test]
-async fn should_download_and_extract_safenodemand_for_windows() {
-    download_and_extract(
-        &ReleaseType::SafenodeManagerDaemon,
-        SAFENODE_MANAGERD_VERSION,
+        &ReleaseType::AntCtlDaemon,
+        ANTCTLD_VERSION,
         &Platform::Windows,
         &ArchiveType::Zip,
     )
@@ -558,6 +489,75 @@ async fn should_download_and_extract_nat_detection_for_windows() {
     download_and_extract(
         &ReleaseType::NatDetection,
         NAT_DETECTION_VERSION,
+        &Platform::Windows,
+        &ArchiveType::Zip,
+    )
+    .await;
+}
+
+///
+/// AntNode RPC Client Tests
+///
+#[tokio::test]
+async fn should_download_and_extract_antnode_rpc_client_for_linux_musl() {
+    download_and_extract(
+        &ReleaseType::AntNodeRpcClient,
+        ANTNODE_RPC_CLIENT_VERSION,
+        &Platform::LinuxMusl,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_antnode_rpc_client_for_linux_musl_aarch64() {
+    download_and_extract(
+        &ReleaseType::AntNodeRpcClient,
+        ANTNODE_RPC_CLIENT_VERSION,
+        &Platform::LinuxMuslAarch64,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_antnode_rpc_client_for_linux_musl_arm() {
+    download_and_extract(
+        &ReleaseType::AntNodeRpcClient,
+        ANTNODE_RPC_CLIENT_VERSION,
+        &Platform::LinuxMuslArm,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_antnode_rpc_client_for_linux_musl_arm_v7() {
+    download_and_extract(
+        &ReleaseType::AntNodeRpcClient,
+        ANTNODE_RPC_CLIENT_VERSION,
+        &Platform::LinuxMuslArmV7,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_antnode_rpc_client_for_macos() {
+    download_and_extract(
+        &ReleaseType::AntNodeRpcClient,
+        ANTNODE_RPC_CLIENT_VERSION,
+        &Platform::MacOs,
+        &ArchiveType::TarGz,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn should_download_and_extract_antnode_rpc_client_for_windows() {
+    download_and_extract(
+        &ReleaseType::AntNodeRpcClient,
+        ANTNODE_RPC_CLIENT_VERSION,
         &Platform::Windows,
         &ArchiveType::Zip,
     )

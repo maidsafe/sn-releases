@@ -24,25 +24,25 @@ use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use zip::ZipArchive;
 
-const AUTONOMI_S3_BASE_URL: &str = "https://autonomi-cli.s3.eu-west-2.amazonaws.com";
+const ANTCTL_S3_BASE_URL: &str = "https://antctl.s3.eu-west-2.amazonaws.com";
+const ANTNODE_S3_BASE_URL: &str = "https://antnode.s3.eu-west-2.amazonaws.com";
+const ANTNODE_RPC_CLIENT_S3_BASE_URL: &str =
+    "https://antnode-rpc-client.s3.eu-west-2.amazonaws.com";
+const ANT_S3_BASE_URL: &str = "https://autonomi-cli.s3.eu-west-2.amazonaws.com";
 const GITHUB_API_URL: &str = "https://api.github.com";
 const NAT_DETECTION_S3_BASE_URL: &str = "https://nat-detection.s3.eu-west-2.amazonaws.com";
 const NODE_LAUNCHPAD_S3_BASE_URL: &str = "https://node-launchpad.s3.eu-west-2.amazonaws.com";
-const SAFENODE_MANAGER_S3_BASE_URL: &str = "https://sn-node-manager.s3.eu-west-2.amazonaws.com";
-const SAFENODE_RPC_CLIENT_S3_BASE_URL: &str =
-    "https://sn-node-rpc-client.s3.eu-west-2.amazonaws.com";
-const SAFENODE_S3_BASE_URL: &str = "https://sn-node.s3.eu-west-2.amazonaws.com";
 const WINSW_URL: &str = "https://sn-node-manager.s3.eu-west-2.amazonaws.com/WinSW-x64.exe";
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum ReleaseType {
-    Autonomi,
+    Ant,
+    AntCtl,
+    AntCtlDaemon,
+    AntNode,
+    AntNodeRpcClient,
     NatDetection,
     NodeLaunchpad,
-    Safenode,
-    SafenodeManager,
-    SafenodeManagerDaemon,
-    SafenodeRpcClient,
 }
 
 impl fmt::Display for ReleaseType {
@@ -51,13 +51,13 @@ impl fmt::Display for ReleaseType {
             f,
             "{}",
             match self {
-                ReleaseType::Autonomi => "autonomi",
+                ReleaseType::Ant => "ant",
+                ReleaseType::AntCtl => "antctl",
+                ReleaseType::AntCtlDaemon => "antctld",
+                ReleaseType::AntNode => "antnode",
+                ReleaseType::AntNodeRpcClient => "antnode_rpc_client",
                 ReleaseType::NatDetection => "nat-detection",
                 ReleaseType::NodeLaunchpad => "node-launchpad",
-                ReleaseType::Safenode => "safenode",
-                ReleaseType::SafenodeManager => "safenode-manager",
-                ReleaseType::SafenodeManagerDaemon => "safenodemand",
-                ReleaseType::SafenodeRpcClient => "safenode_rpc_client",
             }
         )
     }
@@ -66,13 +66,13 @@ impl fmt::Display for ReleaseType {
 lazy_static! {
     static ref RELEASE_TYPE_CRATE_NAME_MAP: HashMap<ReleaseType, &'static str> = {
         let mut m = HashMap::new();
-        m.insert(ReleaseType::Autonomi, "autonomi-cli");
+        m.insert(ReleaseType::Ant, "ant-cli");
+        m.insert(ReleaseType::AntCtl, "ant-node-manager");
+        m.insert(ReleaseType::AntCtlDaemon, "ant-node-manager");
+        m.insert(ReleaseType::AntNode, "ant-node");
+        m.insert(ReleaseType::AntNodeRpcClient, "ant-node-rpc-client");
         m.insert(ReleaseType::NatDetection, "nat-detection");
         m.insert(ReleaseType::NodeLaunchpad, "node-launchpad");
-        m.insert(ReleaseType::Safenode, "sn_node");
-        m.insert(ReleaseType::SafenodeManager, "sn-node-manager");
-        m.insert(ReleaseType::SafenodeManagerDaemon, "sn-node-manager");
-        m.insert(ReleaseType::SafenodeRpcClient, "sn_node_rpc_client");
         m
     };
 }
@@ -120,7 +120,7 @@ impl fmt::Display for ArchiveType {
 pub type ProgressCallback = dyn Fn(u64, u64) + Send + Sync;
 
 #[async_trait]
-pub trait SafeReleaseRepoActions {
+pub trait AntReleaseRepoActions {
     async fn get_latest_version(&self, release_type: &ReleaseType) -> Result<Version>;
     async fn download_release_from_s3(
         &self,
@@ -142,40 +142,40 @@ pub trait SafeReleaseRepoActions {
         -> Result<PathBuf>;
 }
 
-impl dyn SafeReleaseRepoActions {
-    pub fn default_config() -> Box<dyn SafeReleaseRepoActions> {
-        Box::new(SafeReleaseRepository {
+impl dyn AntReleaseRepoActions {
+    pub fn default_config() -> Box<dyn AntReleaseRepoActions> {
+        Box::new(AntReleaseRepository {
             github_api_base_url: GITHUB_API_URL.to_string(),
             nat_detection_base_url: NAT_DETECTION_S3_BASE_URL.to_string(),
             node_launchpad_base_url: NODE_LAUNCHPAD_S3_BASE_URL.to_string(),
-            autonomi_base_url: AUTONOMI_S3_BASE_URL.to_string(),
-            safenode_base_url: SAFENODE_S3_BASE_URL.to_string(),
-            safenode_manager_base_url: SAFENODE_MANAGER_S3_BASE_URL.to_string(),
-            safenode_rpc_client_base_url: SAFENODE_RPC_CLIENT_S3_BASE_URL.to_string(),
+            ant_base_url: ANT_S3_BASE_URL.to_string(),
+            antnode_base_url: ANTNODE_S3_BASE_URL.to_string(),
+            antctl_base_url: ANTCTL_S3_BASE_URL.to_string(),
+            antnode_rpc_client_base_url: ANTNODE_RPC_CLIENT_S3_BASE_URL.to_string(),
         })
     }
 }
 
-pub struct SafeReleaseRepository {
+pub struct AntReleaseRepository {
+    pub ant_base_url: String,
+    pub antctl_base_url: String,
+    pub antnode_base_url: String,
+    pub antnode_rpc_client_base_url: String,
     pub github_api_base_url: String,
     pub nat_detection_base_url: String,
     pub node_launchpad_base_url: String,
-    pub autonomi_base_url: String,
-    pub safenode_base_url: String,
-    pub safenode_manager_base_url: String,
-    pub safenode_rpc_client_base_url: String,
 }
 
-impl SafeReleaseRepository {
+impl AntReleaseRepository {
     fn get_base_url(&self, release_type: &ReleaseType) -> String {
         match release_type {
+            ReleaseType::Ant => self.ant_base_url.clone(),
+            ReleaseType::AntCtl => self.antctl_base_url.clone(),
+            ReleaseType::AntCtlDaemon => self.antctl_base_url.clone(),
+            ReleaseType::AntNode => self.antnode_base_url.clone(),
+            ReleaseType::AntNodeRpcClient => self.antnode_rpc_client_base_url.clone(),
             ReleaseType::NatDetection => self.nat_detection_base_url.clone(),
             ReleaseType::NodeLaunchpad => self.node_launchpad_base_url.clone(),
-            ReleaseType::Autonomi => self.autonomi_base_url.clone(),
-            ReleaseType::Safenode => self.safenode_base_url.clone(),
-            ReleaseType::SafenodeManager => self.safenode_manager_base_url.clone(),
-            ReleaseType::SafenodeManagerDaemon => self.safenode_manager_base_url.clone(),
-            ReleaseType::SafenodeRpcClient => self.safenode_rpc_client_base_url.clone(),
         }
     }
 
@@ -212,7 +212,7 @@ impl SafeReleaseRepository {
 }
 
 #[async_trait]
-impl SafeReleaseRepoActions for SafeReleaseRepository {
+impl AntReleaseRepoActions for AntReleaseRepository {
     /// Uses the crates.io API to obtain the latest version of a crate.
     ///
     /// # Arguments
